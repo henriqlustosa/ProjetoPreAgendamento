@@ -15,11 +15,10 @@
 			
 		</siteMapNode>
 
-		<siteMapNode url="" title="Encaminhamento" description="Páginas de solicitações de exames">
-			<siteMapNode url="~/Encaminhamento/cadencaminhamento.aspx" title="Cadastro Solicitação de Exame" description="Cadastro de Pedido de Consulta" />
-			<siteMapNode url="~/Encaminhamento/pedidospendentes.aspx" title="Exames Solicitados" description="Pedidos de Consulta Pendentes" />
-			<siteMapNode url="~/Encaminhamento/pedidospendentesporrh.aspx" title="Exames Solicitados Por RH" description="Pedidos de Consulta Por RH" />
-			<siteMapNode url="~/Encaminhamento/pedidosarquivados.aspx" title="Exames Arquivados" description="Pedidos de Consulta Arquivados" />
+		<siteMapNode url="" title="Preagendamento" description="Páginas do Pre Agendamento">
+			<siteMapNode url="~/Preagendamento/preagendamento.aspx" title="Cadastro PreAgendamento" description="Cadastro de Pre Agendamento" />
+			<siteMapNode url="~/Preagendamento/preagendamento_listagem.aspx" title="Listagem" description="Listagem do Pre Agendamento" />
+		
 		</siteMapNode>
 
 		<siteMapNode url="" title="Meu Perfil" description="Páginas relacionadas ao perfil de usuário">		

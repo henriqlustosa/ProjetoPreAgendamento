@@ -4,7 +4,7 @@
 <head runat="server">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>HSPM Atendimento</title>
+  <title>HSPM Pré-Agendamento</title>
 
   <!-- Bootstrap 5 (CSS) -->
   <link rel="stylesheet"
@@ -103,7 +103,7 @@
           <button id="toggleSidebar" type="button" class="toggle-btn" title="Mostrar/Esconder Menu">
             <i class="fa fa-bars"></i>
           </button>
-          <h3 class="mb-0 flex-grow-1 text-center">HSPM Atendimento</h3>
+          <h3 class="mb-0 flex-grow-1 text-center">HSPM Pré-Agendamento</h3>
           <asp:LoginStatus ID="LoginStatus1" runat="server" LogoutPageUrl="Default.aspx"
                            CssClass="btn btn-outline-secondary btn-sm" />
         </div>

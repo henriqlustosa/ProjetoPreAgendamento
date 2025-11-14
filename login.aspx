@@ -3,7 +3,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Atendimento Controle de Acesso</title>
+    <title>Pré-Agendamento</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
     <link href="css/login_responsivo.css" rel="stylesheet" />
  
@@ -37,10 +37,10 @@
 <body>
     <form id="form1" runat="server">
         <div class="login__container">
-            <div class="login__titulo">Atendimento Controle de Acesso</div>
+            <div class="login__titulo">Pré-Agendamento - Agendas Médicas</div>
 
             <div class="login__imagem">
-                <img src="img/LoginAtendimentoSACTransparente.svg" alt="Arquivo SAC" />
+                <img src="img/ImagemLogin.jpg" alt="Arquivo SAC" />
             </div>
 
             <div class="login__box">

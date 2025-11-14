@@ -87,7 +87,7 @@ public partial class Login : System.Web.UI.Page
                     Session["nomeUsuario"] = nomeCompleto; // nome do usuário
 
                     // 5. Redirecionar
-                    Response.Redirect("~/Encaminhamento/cadencaminhamento.aspx");
+                    Response.Redirect("~/preagendamento/preagendamento.aspx");
                 }
             }
         }
