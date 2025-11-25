@@ -116,78 +116,124 @@
 
 
 
-  <script>
-      $(function () {
-          $('.child-menu').hide();
-          $('.menu-toggle').parent().removeClass('active');
+<script>
+    $(function () {
 
-          const lastMenuTitle = localStorage.getItem('menuAtivo');
-          if (!$('#sidebar').hasClass('collapsed') && lastMenuTitle) {
-              $('.menu-toggle').each(function () {
-                  if ($(this).attr('title') === lastMenuTitle) {
-                      $(this).parent().addClass('active');
-                      $(this).addClass('open');
-                      $(this).next('.child-menu').show();
-                  }
-              });
-          }
+        // =========================
+        // 1) Ajuste inicial desktop x mobile
+        // =========================
+        var isMobilePrev = window.innerWidth <= 768;
 
-          $('.menu-toggle').on('click', function (e) {
-              e.preventDefault();
-              if ($('#sidebar').hasClass('collapsed')) return;
+        if (isMobilePrev) {
+            // Em mobile o menu deve ser "completo", não colapsado
+            $('#sidebar').removeClass('collapsed');
+        }
 
-              var $submenu = $(this).next('.child-menu');
-              var $parentItem = $(this).parent();
+        // Quando a largura cruza o breakpoint, ajusta o estado do menu
+        $(window).on('resize', function () {
+            var isMobile = window.innerWidth <= 768;
+            if (isMobile === isMobilePrev) return; // não mudou de faixa, ignora
+            isMobilePrev = isMobile;
 
-              $('.menu-toggle').removeClass('open');
+            if (isMobile) {
+                // Entrou em mobile: menu overlay, sempre "cheio"
+                $('#sidebar').removeClass('collapsed').removeClass('mobile-visible');
+                $('.child-menu').hide();
+                $('.menu-toggle').parent().removeClass('active');
+                $('.menu-toggle').removeClass('open');
+            } else {
+                // Voltou para desktop: começa no modo colapsado (ícones apenas)
+                $('#sidebar').addClass('collapsed').removeClass('mobile-visible');
+                $('.child-menu').hide();
+                $('.menu-toggle').parent().removeClass('active');
+                $('.menu-toggle').removeClass('open');
+            }
+        });
 
-              if ($parentItem.hasClass('active')) {
-                  $submenu.stop(true, true).slideUp(200);
-                  $parentItem.removeClass('active');
-                  localStorage.removeItem('menuAtivo');
-              } else {
-                  $('.child-menu').slideUp(200);
-                  $('.menu-toggle').parent().removeClass('active');
-                  $submenu.stop(true, true).slideDown(200);
-                  $parentItem.addClass('active');
-                  $(this).addClass('open');
-                  localStorage.setItem('menuAtivo', $(this).attr('title'));
-              }
-          });
+        // =========================
+        // 2) Lógica de submenu (igual antes)
+        // =========================
+        $('.child-menu').hide();
+        $('.menu-toggle').parent().removeClass('active');
 
-          $('#toggleSidebar').on('click', function () {
-              const isMobile = window.innerWidth <= 768;
+        const lastMenuTitle = localStorage.getItem('menuAtivo');
+        if (!$('#sidebar').hasClass('collapsed') && lastMenuTitle) {
+            $('.menu-toggle').each(function () {
+                if ($(this).attr('title') === lastMenuTitle) {
+                    $(this).parent().addClass('active');
+                    $(this).addClass('open');
+                    $(this).next('.child-menu').show();
+                }
+            });
+        }
 
-              if (isMobile) {
-                  $('#sidebar').toggleClass('mobile-visible');
-              } else {
-                  $('#sidebar').toggleClass('collapsed');
-                  if ($('#sidebar').hasClass('collapsed')) {
-                      $('.child-menu').hide();
-                      $('.menu-toggle').parent().removeClass('active');
-                      $('.menu-toggle').removeClass('open');
-                  } else {
-                      const last = localStorage.getItem('menuAtivo');
-                      if (last) {
-                          $('.menu-toggle').each(function () {
-                              if ($(this).attr('title') === last) {
-                                  $(this).parent().addClass('active');
-                                  $(this).addClass('open');
-                                  $(this).next('.child-menu').slideDown(200);
-                              }
-                          });
-                      }
-                  }
-              }
-          });
+        $('.menu-toggle').on('click', function (e) {
+            e.preventDefault();
+            if ($('#sidebar').hasClass('collapsed')) return;
 
-          $(document).on('click', function (e) {
-              const $t = $(e.target);
-              if (!$t.closest('#sidebar').length && !$t.closest('#toggleSidebar').length && window.innerWidth <= 768) {
-                  $('#sidebar').removeClass('mobile-visible');
-              }
-          });
-      });
-  </script>
+            var $submenu = $(this).next('.child-menu');
+            var $parentItem = $(this).parent();
+
+            $('.menu-toggle').removeClass('open');
+
+            if ($parentItem.hasClass('active')) {
+                $submenu.stop(true, true).slideUp(200);
+                $parentItem.removeClass('active');
+                localStorage.removeItem('menuAtivo');
+            } else {
+                $('.child-menu').slideUp(200);
+                $('.menu-toggle').parent().removeClass('active');
+                $submenu.stop(true, true).slideDown(200);
+                $parentItem.addClass('active');
+                $(this).addClass('open');
+                localStorage.setItem('menuAtivo', $(this).attr('title'));
+            }
+        });
+
+        // =========================
+        // 3) Botão hamburguer
+        // =========================
+        $('#toggleSidebar').on('click', function () {
+            const isMobile = window.innerWidth <= 768;
+
+            if (isMobile) {
+                // Mobile: abre/fecha overlay, sempre com menu completo
+                $('#sidebar').toggleClass('mobile-visible');
+            } else {
+                // Desktop: colapsa/expande (ícones ↔ texto)
+                $('#sidebar').toggleClass('collapsed');
+                if ($('#sidebar').hasClass('collapsed')) {
+                    $('.child-menu').hide();
+                    $('.menu-toggle').parent().removeClass('active');
+                    $('.menu-toggle').removeClass('open');
+                } else {
+                    const last = localStorage.getItem('menuAtivo');
+                    if (last) {
+                        $('.menu-toggle').each(function () {
+                            if ($(this).attr('title') === last) {
+                                $(this).parent().addClass('active');
+                                $(this).addClass('open');
+                                $(this).next('.child-menu').slideDown(200);
+                            }
+                        });
+                    }
+                }
+            }
+        });
+
+        // Fecha menu mobile ao clicar fora
+        $(document).on('click', function (e) {
+            const $t = $(e.target);
+            if (
+                !$t.closest('#sidebar').length &&
+                !$t.closest('#toggleSidebar').length &&
+                window.innerWidth <= 768
+            ) {
+                $('#sidebar').removeClass('mobile-visible');
+            }
+        });
+    });
+</script>
+
 </body>
 </html>

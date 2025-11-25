@@ -12,5 +12,7 @@ public class BlocoDiaDTO
     public string horario { get; set; }
     public string consultasNovas { get; set; }
     public string consultasRetorno { get; set; }
-    public string subespecialidade { get; set; }
+    public string NomeSubespecialidade { get; set; }
+    public int? CodSubespecialidade { get; set; } // NOVO
+    
 }
