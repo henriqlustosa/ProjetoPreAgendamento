@@ -546,7 +546,7 @@
             if (!ddlClinica.val()) { erros.push('Informe a Clínica nos Dados Gerais.'); ddlClinica.addClass('is-invalid'); }
             if (!hdnCodProf.val()) { erros.push('Informe o Nome do Profissional nos Dados Gerais.'); $('#selProfissional').addClass('is-invalid'); }
             if (!$('#<%= txtDataPreenchimento.ClientID %>').val()) erros.push('Data de Preenchimento não informada.');
-            
+
             if (!mesesVal) erros.push('Informe pelo menos um mês em "Meses para Pré-Agendamento".');
 
             // Validação Blocos
@@ -695,17 +695,17 @@
             var strMeses = $('#<%= hdnMesesSelecionados.ClientID %>').val();
             if (strMeses) {
                 var arr = strMeses.split(',');
-                arr.forEach(function(chave) {
-                    if(chave && chave.indexOf('-') > 0) {
+                arr.forEach(function (chave) {
+                    if (chave && chave.indexOf('-') > 0) {
                         var partes = chave.split('-');
                         var ano = parseInt(partes[0]);
                         var mes = parseInt(partes[1]);
                         // Data para Label
-                        var d = new Date(ano, mes-1, 1);
+                        var d = new Date(ano, mes - 1, 1);
                         var label = d.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
                         label = label.charAt(0).toUpperCase() + label.slice(1);
 
-                        if(!mesesSelecionados.has(chave)) {
+                        if (!mesesSelecionados.has(chave)) {
                             mesesSelecionados.set(chave, label);
                             criarCardMes(chave, label);
                         }
@@ -719,39 +719,66 @@
         // INICIALIZAÇÃO (DOMContentLoaded + jQuery)
         // ============================================================
         $(function () {
-            // Popula o dropdown de meses ao iniciar
+            // 1. Popula o dropdown de meses ao iniciar
             preencherDropdownMeses();
 
-            // Eventos de Botão
+            // 2. Eventos de Botão Principais (Adicionar)
             $('#btnAddBloco').click(adicionarBloco);
             $('#btnAddBloqueio').click(adicionarBloqueio);
 
-            // Evento Botão Adicionar Mês
-            $('#btnAdicionarMes').click(function() {
+            // 3. Evento Botão Adicionar Mês
+            $('#btnAdicionarMes').click(function () {
                 var ddl = document.getElementById('ddlMesesDisponiveis');
                 var chave = ddl.value;
                 if (!chave) { alert('Selecione um mês.'); return; }
                 if (mesesSelecionados.has(chave)) { alert('Mês já adicionado.'); return; }
-                
+
                 var label = ddl.options[ddl.selectedIndex].text;
                 mesesSelecionados.set(chave, label);
                 criarCardMes(chave, label);
                 atualizarHiddenFieldMeses();
             });
 
-            // Evento Remover Mês (Delegado)
-            $('#containerMesesSelecionados').on('click', '.btn-remover-mes', function() {
+            // ------------------------------------------------------------
+            // CORREÇÃO DOS BUGS DE REMOÇÃO (Event Delegation)
+            // ------------------------------------------------------------
+
+            // A. Remover Mês
+            $('#containerMesesSelecionados').on('click', '.btn-remover-mes', function () {
                 var div = $(this).closest('[data-mes]');
                 var chave = div.attr('data-mes');
+
+                // Remove do Mapa lógico e do HTML
                 mesesSelecionados.delete(chave);
                 div.remove();
+
+                // Atualiza o HiddenField para o Backend
                 atualizarHiddenFieldMeses();
             });
 
-            // Remove validação visual
-            $('body').on('change input', '.is-invalid', function () { $(this).removeClass('is-invalid').closest('.erro-bloco').removeClass('erro-bloco'); });
+            // B. Remover Bloqueio (Esta funcionalidade estava ausente)
+            $('#bloqueiosContainer').on('click', '.btn-remover-bloqueio', function () {
+                // Encontra a linha pai (.bloco-bloqueio) e a remove
+                $(this).closest('.bloco-bloqueio').remove();
+            });
 
-            // Change Clínica
+            // C. Remover Bloco de Dia/Horário (Também estava ausente)
+            $('#blocosContainer').on('click', '.btn-remover-bloco', function () {
+                // Encontra o wrapper do dia (.bloco-dia-wrapper) e o remove
+                $(this).closest('.bloco-dia-wrapper').remove();
+            });
+
+            // ------------------------------------------------------------
+            // OUTROS EVENTOS DE INTERFACE
+            // ------------------------------------------------------------
+
+            // Remove validação visual (borda vermelha) ao editar
+            $('body').on('change input', '.is-invalid', function () {
+                $(this).removeClass('is-invalid');
+                $(this).closest('.erro-bloco').removeClass('erro-bloco');
+            });
+
+            // Change Clínica (Carrega subespecialidades e limpa profissionais)
             $('#<%= ddlClinica.ClientID %>').change(function () {
                 var cod = $(this).val();
                 carregarSubespecialidades(cod);
@@ -759,20 +786,21 @@
                 if (cod) $(this).removeClass('is-invalid');
             });
 
-            // Change Profissional
+            // Change Profissional (Atualiza Hidden Fields)
             $('#selProfissional').change(function () {
                 var cod = $(this).val();
                 var nome = $(this).find("option:selected").text();
                 $('#<%= hdnCodProfissional.ClientID %>').val(cod);
-                $('#<%= hdnNomeProfissional.ClientID %>').val(nome);
-                if (cod) $(this).removeClass('is-invalid');
-            });
+        $('#<%= hdnNomeProfissional.ClientID %>').val(nome);
+        if (cod) $(this).removeClass('is-invalid');
+    });
 
-            // MODO EDIÇÃO: Verifica se deve carregar dados
+            // MODO EDIÇÃO: Verifica se deve carregar dados existentes ou criar linha em branco
             var idEdicao = $('#<%= hdnIdPreAgendamento.ClientID %>').val();
             if (idEdicao) {
                 carregarDadosEdicao();
             } else {
+                // Se for novo cadastro, inicia com 1 bloco vazio para facilitar
                 adicionarBloco();
             }
         });

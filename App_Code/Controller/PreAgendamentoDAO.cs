@@ -248,7 +248,7 @@ public class PreAgendamentoDAO
                 // A. Inativar
                 string sqlInatPer = @"
                     UPDATE dbo.PreAgendamentoPeriodo 
-                    SET Status = 'I' -- Nota: Periodo não tem data_exclusao na imagem, se tiver adicione
+                    SET Status = 'I' , DataExclusao = GETDATE()
                     WHERE IdPreAgendamento = @id AND Status = 'A'";
 
                 using (SqlCommand cmd = new SqlCommand(sqlInatPer, con, tran))
