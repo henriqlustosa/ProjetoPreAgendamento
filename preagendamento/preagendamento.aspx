@@ -297,10 +297,10 @@
         var blocoIndex = 0;
         var bloqueioIndex = 0;
         var subespecialidadesCache = null;
-        var mesesSelecionados = new Map(); // Mapa global para controlar meses
+        var mesesSelecionados = new Map();
 
         // ============================================================
-        // LÓGICA DE MESES (Movida para escopo acessível)
+        // LÓGICA DE MESES
         // ============================================================
         function preencherDropdownMeses() {
             var ddlMeses = document.getElementById('ddlMesesDisponiveis');
@@ -310,7 +310,6 @@
             ddlMeses.appendChild(new Option('Selecione...', ''));
 
             var hoje = new Date();
-            // Tenta pegar da data preenchida, senão usa hoje
             if (txtData && txtData.value) {
                 var partes = txtData.value.split('-');
                 if (partes.length === 3) hoje = new Date(partes[0], partes[1] - 1, partes[2]);
@@ -323,9 +322,7 @@
                 var ano = dataAtual.getFullYear();
                 var mesStr = (mes < 10 ? '0' + mes : mes.toString());
                 var chave = ano + '-' + mesStr;
-                // Formata label (Ex: Novembro de 2025)
                 var label = dataAtual.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
-                // Capitaliza primeira letra
                 label = label.charAt(0).toUpperCase() + label.slice(1);
 
                 ddlMeses.appendChild(new Option(label, chave));
@@ -340,8 +337,6 @@
 
         function criarCardMes(chave, label) {
             var container = document.getElementById('containerMesesSelecionados');
-
-            // Evita duplicatas visuais
             if (container.querySelector('[data-mes="' + chave + '"]')) return;
 
             var div = document.createElement('div');
@@ -391,16 +386,15 @@
                     }
                     if (codPreSelecionado) {
                         selProf.val(codPreSelecionado);
+                        // Se o valor setado não existir na lista, adiciona manualmente para não perder visualmente
                         if (!selProf.val()) {
                             var nomeSalvo = $('#<%= hdnNomeProfissional.ClientID %>').val();
                             selProf.append($('<option/>', { value: codPreSelecionado, text: nomeSalvo, selected: true }));
                         }
-                        // --- CORREÇÃO AQUI: ---
-                        // Atualiza o HiddenField do NOME imediatamente após selecionar o valor via código
-                        var nomeSelecionado = selProf.find("option:selected").text();
-                        $('#<%= hdnNomeProfissional.ClientID %>').val(nomeSelecionado);
-                        // ----------------------
                     }
+                    // Garante que o hidden nome está atualizado
+                    var nomeSelecionado = selProf.find("option:selected").text();
+                    if (selProf.val()) $('#<%= hdnNomeProfissional.ClientID %>').val(nomeSelecionado);
                 },
                 function (err) { alert('Erro: ' + err.get_message()); }
             );
@@ -430,7 +424,7 @@
         }
 
         // ============================================================
-        // GERADORES DE HTML (Blocos e Bloqueios)
+        // GERADORES DE HTML
         // ============================================================
         function criarBlocoHtml(index) {
             return '<div class="col-md-4 bloco-dia-wrapper" data-index="' + index + '">' +
@@ -492,6 +486,8 @@
             var html = criarBloqueioHtml(bloqueioIndex++);
             $('#bloqueiosContainer').append(html);
             var $novo = $('#bloqueiosContainer .bloco-bloqueio').last();
+
+            // Validação visual rápida
             $novo.find('.campo-bloq-de, .campo-bloq-ate, .campo-bloq-motivo').on('blur change', function () {
                 var $campo = $(this);
                 if (!$campo.val()) {
@@ -505,7 +501,7 @@
         }
 
         // ============================================================
-        // VALIDAÇÃO E PREPARAÇÃO (Save)
+        // VALIDAÇÃO E PREPARAÇÃO (SAVE)
         // ============================================================
         function limparErrosCamposObrigatorios() {
             $('.is-invalid').removeClass('is-invalid');
@@ -525,17 +521,13 @@
             var bsModal = new bootstrap.Modal(modal);
             bsModal.show();
         }
-        // Verifica se uma data (yyyy-mm-dd) pertence a um dos meses selecionados
+
         function validarDataNoPeriodo(dataStr) {
             if (!dataStr || dataStr.length < 7) return false;
-
-            // O input type="date" retorna yyyy-MM-dd. 
-            // Os mesesSelecionados usam a chave yyyy-MM.
-            // Basta pegar os primeiros 7 caracteres.
             var chaveMes = dataStr.substring(0, 7);
-
             return mesesSelecionados.has(chaveMes);
         }
+
         function PrepararBlocos() {
             var erros = [];
             var blocos = [];
@@ -543,189 +535,138 @@
             var temBlocoValido = false;
             var combinacoesBlocos = new Set();
 
-            // 1. Remove destaques de erro anteriores
             limparErrosCamposObrigatorios();
 
             var ddlClinica = $('#<%= ddlClinica.ClientID %>');
             var hdnCodProf = $('#<%= hdnCodProfissional.ClientID %>');
             var selProf = $('#selProfissional');
             var hdnMeses = $('#<%= hdnMesesSelecionados.ClientID %>');
-        var ddlMesesDisp = $('#ddlMesesDisponiveis');
+            var ddlMesesDisp = $('#ddlMesesDisponiveis');
 
-        // Atualiza Hidden Meses antes de validar
-        atualizarHiddenFieldMeses();
-        var mesesVal = hdnMeses.val();
+            atualizarHiddenFieldMeses();
+            var mesesVal = hdnMeses.val();
 
-        // --------------------------------------------------------
-        // VALIDAÇÃO: CAMPOS GERAIS OBRIGATÓRIOS
-        // --------------------------------------------------------
+            if (!ddlClinica.val()) { erros.push('A Clínica é obrigatória.'); ddlClinica.addClass('is-invalid'); }
+            if (!hdnCodProf.val()) { erros.push('O Nome do Profissional é obrigatório.'); selProf.addClass('is-invalid'); }
+            if (!$('#<%= txtDataPreenchimento.ClientID %>').val()) { erros.push('Data de Preenchimento não informada.'); }
+            if (!mesesVal) { erros.push('Informe pelo menos um mês em "Meses para Pré-Agendamento".'); ddlMesesDisp.addClass('is-invalid'); }
 
-        if (!ddlClinica.val()) {
-            erros.push('A Clínica é obrigatória.');
-            ddlClinica.addClass('is-invalid');
-        }
+            // BLOCOS
+            var totalBlocosVisiveis = $('#blocosContainer .bloco-dia').length;
+            $('#blocosContainer .bloco-dia').each(function (idx) {
+                var $b = $(this);
+                var diaSemana = $b.find('.campo-dia-semana').val();
+                var horario = $b.find('.campo-horario').val();
+                var cNovas = $b.find('.campo-consultas-novas').val();
+                var cRetorno = $b.find('.campo-consultas-retorno').val();
+                var subId = $b.find('.campoSubespecialidade').val();
+                var subTexto = $b.find('.campoSubespecialidade option:selected').text();
 
-        if (!hdnCodProf.val()) {
-            erros.push('O Nome do Profissional é obrigatório.');
-            selProf.addClass('is-invalid');
-        }
+                // DEFINIÇÃO DAS VARIÁVEIS DE CONTROLE
+                var temNovas = (cNovas && cNovas.trim() !== "");
+                var temRetorno = (cRetorno && cRetorno.trim() !== "");
 
-        if (!$('#<%= txtDataPreenchimento.ClientID %>').val()) {
-            erros.push('Data de Preenchimento não informada.');
-        }
+                var prefixo = 'Bloco ' + (idx + 1) + ': ';
+                var valido = true;
+                var msgErroBloco = [];
 
-        if (!mesesVal) {
-            erros.push('Informe pelo menos um mês em "Meses para Pré-Agendamento".');
-            ddlMesesDisp.addClass('is-invalid');
-        }
-
-        // --------------------------------------------------------
-        // VALIDAÇÃO: BLOCOS DE HORÁRIO
-        // --------------------------------------------------------
-        var totalBlocosVisiveis = $('#blocosContainer .bloco-dia').length;
-
-        $('#blocosContainer .bloco-dia').each(function (idx) {
-            var $b = $(this);
-
-            // Captura valores
-            var diaSemana = $b.find('.campo-dia-semana').val();
-            var horario = $b.find('.campo-horario').val();
-            var cNovas = $b.find('.campo-consultas-novas').val();
-            var cRetorno = $b.find('.campo-consultas-retorno').val();
-            var subId = $b.find('.campoSubespecialidade').val();
-            var subTexto = $b.find('.campoSubespecialidade option:selected').text();
-
-            var prefixo = 'Bloco ' + (idx + 1) + ': ';
-            var valido = true;
-            var msgErroBloco = [];
-
-            // 1. Validação Dia da Semana
-            if (!diaSemana) {
-                msgErroBloco.push('Dia da Semana');
-                valido = false;
-                $b.find('.campo-dia-semana').addClass('is-invalid');
-            }
-
-            // 2. Validação Horário
-            if (!horario) {
-                msgErroBloco.push('Horário');
-                valido = false;
-                $b.find('.campo-horario').addClass('is-invalid');
-            }
-
-            // 3. Validação Consultas (Exige pelo menos uma quantidade preenchida)
-            // Se ambos estiverem vazios -> ERRO
-            if ((!cNovas || cNovas.trim() === "") && (!cRetorno || cRetorno.trim() === "")) {
-                msgErroBloco.push('Qtd. Consultas');
-                valido = false;
-                // Marca ambos como inválidos
-                $b.find('.campo-consultas-novas, .campo-consultas-retorno').addClass('is-invalid');
-            } else {
-                // --- CORREÇÃO IMPORTANTE ---
-                // Se pelo menos um foi preenchido, remove o vermelho de AMBOS imediatamente
-                $b.find('.campo-consultas-novas, .campo-consultas-retorno').removeClass('is-invalid');
-            }
-
-            // 4. Validação Subespecialidade
-            if (!subId) {
-                msgErroBloco.push('Subespecialidade');
-                valido = false;
-                $b.find('.campoSubespecialidade').addClass('is-invalid');
-            }
-
-            if (!valido) {
-                erros.push(prefixo + 'Preencha: ' + msgErroBloco.join(', ') + '.');
-                $b.addClass('erro-bloco');
-            }
-
-            // Verifica duplicidade
-            if (valido) {
-                var chave = diaSemana + '|' + horario + '|' + subId;
-                if (combinacoesBlocos.has(chave)) {
-                    erros.push(prefixo + 'Bloco duplicado (Dia, Horário e Subespecialidade iguais).');
-                    valido = false;
-                    $b.addClass('erro-bloco');
+                if (!diaSemana) { msgErroBloco.push('Dia da Semana'); valido = false; $b.find('.campo-dia-semana').addClass('is-invalid'); }
+                if (!horario) { msgErroBloco.push('Horário'); valido = false; $b.find('.campo-horario').addClass('is-invalid'); }
+                
+                if (!temNovas && !temRetorno) {
+                    msgErroBloco.push('Qtd. Consultas'); valido = false;
+                    $b.find('.campo-consultas-novas, .campo-consultas-retorno').addClass('is-invalid');
                 } else {
-                    combinacoesBlocos.add(chave);
+                    $b.find('.campo-consultas-novas, .campo-consultas-retorno').removeClass('is-invalid');
                 }
+
+                if (!subId) { msgErroBloco.push('Subespecialidade'); valido = false; $b.find('.campoSubespecialidade').addClass('is-invalid'); }
+
+                if (!valido) {
+                    erros.push(prefixo + 'Preencha: ' + msgErroBloco.join(', ') + '.');
+                    $b.addClass('erro-bloco');
+                }
+
+                if (valido) {
+                    var chave = diaSemana + '|' + horario + '|' + subId;
+                    if (combinacoesBlocos.has(chave)) {
+                        erros.push(prefixo + 'Bloco duplicado (Dia, Horário e Subespecialidade iguais).');
+                        valido = false;
+                        $b.addClass('erro-bloco');
+                    } else {
+                        combinacoesBlocos.add(chave);
+                    }
+                }
+
+                if (valido) {
+                    temBlocoValido = true;
+                    blocos.push({
+                        DiaSemana: diaSemana,
+                        Horario: horario,
+                        ConsultasNovas: temNovas ? cNovas : "0",
+                        ConsultasRetorno: temRetorno ? cRetorno : "0",
+                        CodSubespecialidade: subId,
+                        SubespecialidadeTexto: subTexto
+                    });
+                }
+            });
+
+            if (totalBlocosVisiveis === 0) erros.push('Adicione pelo menos um Bloco de Horário.');
+            else if (!temBlocoValido && erros.length === 0) erros.push('Verifique os dados dos horários.');
+
+            // BLOQUEIOS
+            $('#bloqueiosContainer .bloco-bloqueio').each(function (idx) {
+                var $b = $(this);
+                var de = $b.find('.campo-bloq-de').val();
+                var ate = $b.find('.campo-bloq-ate').val();
+                var motivo = $b.find('.campo-bloq-motivo').val();
+                var prefixo = 'Bloqueio ' + (idx + 1) + ': ';
+                var erroLinha = false;
+
+                if (!de) { erros.push(prefixo + 'falta data "De".'); erroLinha = true; $b.find('.campo-bloq-de').addClass('is-invalid'); }
+                if (!ate) { erros.push(prefixo + 'falta data "Até".'); erroLinha = true; $b.find('.campo-bloq-ate').addClass('is-invalid'); }
+                if (!motivo) { erros.push(prefixo + 'falta "Motivo".'); erroLinha = true; $b.find('.campo-bloq-motivo').addClass('is-invalid'); }
+
+                if (!erroLinha && de && ate) {
+                    if (de > ate) {
+                        erros.push(prefixo + 'Data inicial maior que final.');
+                        erroLinha = true;
+                        $b.find('input[type=date]').addClass('is-invalid');
+                    }
+                    if (!validarDataNoPeriodo(de)) {
+                        erros.push(prefixo + 'Data Inicial fora dos meses selecionados.');
+                        erroLinha = true;
+                        $b.find('.campo-bloq-de').addClass('is-invalid');
+                    }
+                    if (!validarDataNoPeriodo(ate)) {
+                        erros.push(prefixo + 'Data Final fora dos meses selecionados.');
+                        erroLinha = true;
+                        $b.find('.campo-bloq-ate').addClass('is-invalid');
+                    }
+                }
+
+                if (!erroLinha && de && ate && motivo) {
+                    bloqueios.push({ De: de, Ate: ate, Motivo: motivo });
+                } else {
+                    $b.addClass('erro-bloco');
+                }
+            });
+
+            if (erros.length > 0) {
+                exibirErrosModal(erros);
+                return false;
             }
 
-            if (valido) {
-                temBlocoValido = true;
-                blocos.push({
-                    DiaSemana: diaSemana,
-                    Horario: horario,
-                    // Se estiver preenchido usa o valor, se estiver vazio envia "0"
-                    ConsultasNovas: temNovas ? cNovas : "0", 
-                    ConsultasRetorno: temRetorno ? cRetorno : "0",
-                    CodSubespecialidade: subId,
-                    SubespecialidadeTexto: subTexto
-                });
-            }
-        });
-
-        if (totalBlocosVisiveis === 0) {
-            erros.push('Adicione pelo menos um Bloco de Horário.');
-        } else if (!temBlocoValido && erros.length === 0) {
-            erros.push('Verifique os dados dos horários.');
-        }
-
-        // --------------------------------------------------------
-        // VALIDAÇÃO: BLOQUEIOS
-        // --------------------------------------------------------
-        $('#bloqueiosContainer .bloco-bloqueio').each(function (idx) {
-            var $b = $(this);
-            var de = $b.find('.campo-bloq-de').val();
-            var ate = $b.find('.campo-bloq-ate').val();
-            var motivo = $b.find('.campo-bloq-motivo').val();
-            var prefixo = 'Bloqueio ' + (idx + 1) + ': ';
-            var erroLinha = false;
-
-            if (!de) { erros.push(prefixo + 'falta data "De".'); erroLinha = true; $b.find('.campo-bloq-de').addClass('is-invalid'); }
-            if (!ate) { erros.push(prefixo + 'falta data "Até".'); erroLinha = true; $b.find('.campo-bloq-ate').addClass('is-invalid'); }
-            if (!motivo) { erros.push(prefixo + 'falta "Motivo".'); erroLinha = true; $b.find('.campo-bloq-motivo').addClass('is-invalid'); }
-
-            if (!erroLinha && de && ate) {
-                if (de > ate) {
-                    erros.push(prefixo + 'Data inicial maior que final.');
-                    erroLinha = true;
-                    $b.find('input[type=date]').addClass('is-invalid');
-                }
-                if (!validarDataNoPeriodo(de)) {
-                    erros.push(prefixo + 'Data Inicial fora dos meses selecionados.');
-                    erroLinha = true;
-                    $b.find('.campo-bloq-de').addClass('is-invalid');
-                }
-                if (!validarDataNoPeriodo(ate)) {
-                    erros.push(prefixo + 'Data Final fora dos meses selecionados.');
-                    erroLinha = true;
-                    $b.find('.campo-bloq-ate').addClass('is-invalid');
-                }
-            }
-
-            if (!erroLinha && de && ate && motivo) {
-                bloqueios.push({ De: de, Ate: ate, Motivo: motivo });
-            } else {
-                $b.addClass('erro-bloco');
-            }
-        });
-
-        if (erros.length > 0) {
-            exibirErrosModal(erros);
-            return false;
-        }
-
-        $('#<%= hdnBlocosJson.ClientID %>').val(JSON.stringify(blocos));
+            $('#<%= hdnBlocosJson.ClientID %>').val(JSON.stringify(blocos));
             $('#<%= hdnBloqueiosJson.ClientID %>').val(JSON.stringify(bloqueios));
 
             return true;
         }
 
         // ============================================================
-        // CARREGAR DADOS EDIÇÃO
+        // CARREGAR DADOS EDIÇÃO (ATUALIZADO)
         // ============================================================
         function carregarDadosEdicao() {
-            // 1. Carrega Profissional
             var codClinica = $('#<%= ddlClinica.ClientID %>').val();
             var codProf = $('#<%= hdnCodProfissional.ClientID %>').val();
 
@@ -734,61 +675,69 @@
                 carregarSubespecialidades(codClinica);
             }
 
-            // 2. Recria Blocos
+            // CARREGA BLOCOS
             var jsonBlocos = $('#<%= hdnBlocosJson.ClientID %>').val();
-            if (jsonBlocos && jsonBlocos !== '[]') {
-                var blocos = JSON.parse(jsonBlocos);
-                $('#blocosContainer').empty();
-                blocoIndex = 0;
+            if (jsonBlocos && jsonBlocos !== '[]' && jsonBlocos !== 'null') {
+                try {
+                    var blocos = JSON.parse(jsonBlocos);
+                    $('#blocosContainer').empty();
+                    blocoIndex = 0;
 
-                blocos.forEach(function (b) {
-                    var html = criarBlocoHtml(blocoIndex);
-                    $('#blocosContainer').append(html);
-                    var $row = $('#blocosContainer .bloco-dia-wrapper').last();
+                    blocos.forEach(function (b) {
+                        var html = criarBlocoHtml(blocoIndex);
+                        $('#blocosContainer').append(html);
+                        var $row = $('#blocosContainer .bloco-dia-wrapper').last();
 
-                    $row.find('.campo-dia-semana').val(b.DiaSemana || b.diaSemana);
-                    $row.find('.campo-horario').val(b.Horario || b.horario);
-                    $row.find('.campo-consultas-novas').val(b.ConsultasNovas || b.consultasNovas);
-                    $row.find('.campo-consultas-retorno').val(b.ConsultasRetorno || b.consultasRetorno);
+                        $row.find('.campo-dia-semana').val(b.DiaSemana || b.diaSemana);
+                        $row.find('.campo-horario').val(b.Horario || b.horario);
+                        $row.find('.campo-consultas-novas').val(b.ConsultasNovas || b.consultasNovas);
+                        $row.find('.campo-consultas-retorno').val(b.ConsultasRetorno || b.consultasRetorno);
 
-                    var codSub = b.CodSubespecialidade || b.codSubespecialidade;
-                    var txtSub = b.SubespecialidadeTexto || b.subespecialidadeTexto || "Selecionada";
-                    if (codSub) {
-                        var $ddl = $row.find('.campoSubespecialidade');
-                        $ddl.attr('data-selected', codSub);
-                        if (subespecialidadesCache) {
-                            preencherSelectSubespecialidade($ddl, subespecialidadesCache);
-                            $ddl.val(codSub);
-                        } else {
-                            $ddl.empty().append(new Option(txtSub, codSub, true, true));
+                        var codSub = b.CodSubespecialidade || b.codSubespecialidade;
+                        var txtSub = b.SubespecialidadeTexto || b.subespecialidadeTexto || "Selecionada";
+
+                        if (codSub) {
+                            var $ddl = $row.find('.campoSubespecialidade');
+                            $ddl.attr('data-selected', codSub);
+                            if (subespecialidadesCache) {
+                                preencherSelectSubespecialidade($ddl, subespecialidadesCache);
+                                $ddl.val(codSub);
+                            } else {
+                                $ddl.empty().append(new Option(txtSub, codSub, true, true));
+                            }
                         }
-                    }
-                    blocoIndex++;
-                });
+                        blocoIndex++;
+                    });
+                } catch (e) { console.error("Erro JSON Blocos", e); }
             }
 
-            // 3. Recria Bloqueios
+            // CARREGA BLOQUEIOS (ATUALIZADO PARA DATAS EM STRING)
             var jsonBloqueios = $('#<%= hdnBloqueiosJson.ClientID %>').val();
-            if (jsonBloqueios && jsonBloqueios !== '[]') {
-                var bloqueios = JSON.parse(jsonBloqueios);
-                $('#bloqueiosContainer').empty();
-                bloqueioIndex = 0;
-                bloqueios.forEach(function (b) {
-                    var html = criarBloqueioHtml(bloqueioIndex);
-                    $('#bloqueiosContainer').append(html);
-                    var $row = $('#bloqueiosContainer .bloco-bloqueio').last();
-                    var de = b.De || b.de;
-                    var ate = b.Ate || b.ate;
-                    if (de && de.length >= 10) de = de.substring(0, 10);
-                    if (ate && ate.length >= 10) ate = ate.substring(0, 10);
-                    $row.find('.campo-bloq-de').val(de);
-                    $row.find('.campo-bloq-ate').val(ate);
-                    $row.find('.campo-bloq-motivo').val(b.Motivo || b.motivo);
-                    bloqueioIndex++;
-                });
+            if (jsonBloqueios && jsonBloqueios !== '[]' && jsonBloqueios !== 'null') {
+                try {
+                    var bloqueios = JSON.parse(jsonBloqueios);
+                    $('#bloqueiosContainer').empty();
+                    bloqueioIndex = 0;
+                    bloqueios.forEach(function (b) {
+                        var html = criarBloqueioHtml(bloqueioIndex);
+                        $('#bloqueiosContainer').append(html);
+                        var $row = $('#bloqueiosContainer .bloco-bloqueio').last();
+
+                        // C# agora manda "yyyy-MM-dd", que é exatamente o que o input date precisa
+                        // Nenhuma conversão adicional é necessária aqui.
+                        var de = b.De || b.de;
+                        var ate = b.Ate || b.ate;
+                        var motivo = b.Motivo || b.motivo;
+
+                        $row.find('.campo-bloq-de').val(de);
+                        $row.find('.campo-bloq-ate').val(ate);
+                        $row.find('.campo-bloq-motivo').val(motivo);
+                        bloqueioIndex++;
+                    });
+                } catch (e) { console.error("Erro JSON Bloqueios", e); }
             }
 
-            // 4. Recria Meses (Visualmente)
+            // CARREGA MESES
             var strMeses = $('#<%= hdnMesesSelecionados.ClientID %>').val();
             if (strMeses) {
                 var arr = strMeses.split(',');
@@ -797,7 +746,6 @@
                         var partes = chave.split('-');
                         var ano = parseInt(partes[0]);
                         var mes = parseInt(partes[1]);
-                        // Data para Label
                         var d = new Date(ano, mes - 1, 1);
                         var label = d.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
                         label = label.charAt(0).toUpperCase() + label.slice(1);
@@ -813,102 +761,66 @@
         }
 
         // ============================================================
-        // INICIALIZAÇÃO (DOMContentLoaded + jQuery)
+        // INICIALIZAÇÃO
         // ============================================================
         $(function () {
-            // 1. Popula o dropdown de meses ao iniciar
             preencherDropdownMeses();
 
-            // 2. Eventos de Botão Principais (Adicionar)
             $('#btnAddBloco').click(adicionarBloco);
             $('#btnAddBloqueio').click(adicionarBloqueio);
 
-            // 3. Evento Botão Adicionar Mês
             $('#btnAdicionarMes').click(function () {
                 var ddl = document.getElementById('ddlMesesDisponiveis');
-                var $ddl = $(ddl); // Cria objeto jQuery para manipular classes
-
+                var $ddl = $(ddl);
                 var chave = ddl.value;
 
-                if (!chave) {
-                    alert('Selecione um mês.');
-                    return;
-                }
-
-                if (mesesSelecionados.has(chave)) {
-                    alert('Mês já adicionado.');
-                    return;
-                }
+                if (!chave) { alert('Selecione um mês.'); return; }
+                if (mesesSelecionados.has(chave)) { alert('Mês já adicionado.'); return; }
 
                 var label = ddl.options[ddl.selectedIndex].text;
                 mesesSelecionados.set(chave, label);
                 criarCardMes(chave, label);
                 atualizarHiddenFieldMeses();
-
-                // --- CORREÇÃO: Remove o vermelho assim que adicionar com sucesso ---
                 $ddl.removeClass('is-invalid');
             });
 
-            // ------------------------------------------------------------
-            // CORREÇÃO DOS BUGS DE REMOÇÃO (Event Delegation)
-            // ------------------------------------------------------------
-
-            // A. Remover Mês
+            // DELEGAÇÃO DE EVENTOS PARA BOTÕES DE REMOÇÃO (Para funcionar com elementos dinâmicos)
             $('#containerMesesSelecionados').on('click', '.btn-remover-mes', function () {
                 var div = $(this).closest('[data-mes]');
                 var chave = div.attr('data-mes');
-
-                // Remove do Mapa lógico e do HTML
                 mesesSelecionados.delete(chave);
                 div.remove();
-
-                // Atualiza o HiddenField para o Backend
                 atualizarHiddenFieldMeses();
             });
 
-            // B. Remover Bloqueio (Esta funcionalidade estava ausente)
             $('#bloqueiosContainer').on('click', '.btn-remover-bloqueio', function () {
-                // Encontra a linha pai (.bloco-bloqueio) e a remove
                 $(this).closest('.bloco-bloqueio').remove();
             });
 
-            // C. Remover Bloco de Dia/Horário (Também estava ausente)
             $('#blocosContainer').on('click', '.btn-remover-bloco', function () {
-                // Encontra o wrapper do dia (.bloco-dia-wrapper) e o remove
                 $(this).closest('.bloco-dia-wrapper').remove();
             });
-            // ------------------------------------------------------------
-            // D. Limpeza Cruzada de Erros (Consultas Novas <-> Retorno)
-            // ------------------------------------------------------------
+
+            // REMOVE ERRO VISUAL AO DIGITAR
             $('#blocosContainer').on('input', '.campo-consultas-novas, .campo-consultas-retorno', function () {
                 var $wrapper = $(this).closest('.bloco-dia');
                 var $novas = $wrapper.find('.campo-consultas-novas');
                 var $retorno = $wrapper.find('.campo-consultas-retorno');
 
-                // Se houver valor em pelo menos um dos dois campos
                 if ($novas.val() || $retorno.val()) {
-                    // Remove o vermelho de AMBOS
                     $novas.removeClass('is-invalid');
                     $retorno.removeClass('is-invalid');
-
-                    // Se não houver mais nenhum campo inválido neste bloco, tira a borda vermelha do box
                     if ($wrapper.find('.is-invalid').length === 0) {
                         $wrapper.removeClass('erro-bloco');
                     }
                 }
             });
 
-            // ------------------------------------------------------------
-            // OUTROS EVENTOS DE INTERFACE
-            // ------------------------------------------------------------
-
-            // Remove validação visual (borda vermelha) ao editar
             $('body').on('change input', '.is-invalid', function () {
                 $(this).removeClass('is-invalid');
                 $(this).closest('.erro-bloco').removeClass('erro-bloco');
             });
 
-            // Change Clínica (Carrega subespecialidades e limpa profissionais)
             $('#<%= ddlClinica.ClientID %>').change(function () {
                 var cod = $(this).val();
                 carregarSubespecialidades(cod);
@@ -916,7 +828,6 @@
                 if (cod) $(this).removeClass('is-invalid');
             });
 
-            // Change Profissional (Atualiza Hidden Fields)
             $('#selProfissional').change(function () {
                 var cod = $(this).val();
                 var nome = $(this).find("option:selected").text();
@@ -925,12 +836,10 @@
                 if (cod) $(this).removeClass('is-invalid');
             });
 
-            // MODO EDIÇÃO: Verifica se deve carregar dados existentes ou criar linha em branco
             var idEdicao = $('#<%= hdnIdPreAgendamento.ClientID %>').val();
             if (idEdicao) {
                 carregarDadosEdicao();
             } else {
-                // Se for novo cadastro, inicia com 1 bloco vazio para facilitar
                 adicionarBloco();
             }
         });

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Configuration;
 using System.Data.SqlClient;
 using System.Globalization;
+using System.Linq; // NECESSÁRIO PARA O .SELECT()
 using System.Web.Script.Serialization;
 using System.Web.UI;
 
@@ -19,9 +20,6 @@ public partial class publico_preagendamento : BasePage
             txtDataPreenchimento.Attributes["readonly"] = "readonly";
 
             CarregarClinicas();
-
-            // REMOVIDO: ddlProfissional.Items.Clear();
-            // O controle agora é HTML puro e será gerenciado via JavaScript/HiddenFields
 
             // --- MODO EDIÇÃO ---
             int idEdicao;
@@ -90,31 +88,42 @@ public partial class publico_preagendamento : BasePage
                 ddlClinica.SelectedValue = dto.CodEspecialidade.ToString();
         }
 
-        // --- ALTERADO PARA HIDDEN FIELDS ---
-        // Em vez de preencher o DropDownList (que não existe mais no server),
-        // preenchemos os HiddenFields. O JavaScript no frontend lerá esses valores
-        // e selecionará o profissional visualmente.
-
+        // Profissional (Via Hidden Fields)
         hdnCodProfissional.Value = dto.CodProfissional.ToString();
-        hdnNomeProfissional.Value = dto.Profissional; // Garanta que o DTO traga o nome
+        hdnNomeProfissional.Value = dto.Profissional;
 
         // Observações
         txtObservacoes.Text = dto.Observacoes ?? string.Empty;
 
-        // Carrega os dados complexos para os HiddenFields JSON
-        // O JavaScript (carregarDadosEdicao) vai ler isso e montar a tela
+        // Serializador JSON
         JavaScriptSerializer js = new JavaScriptSerializer();
 
-        // Blocos
-        List<BlocoDiaDTO> blocos = PreAgendamentoDAO.ListarBlocos(id); // Precisa existir no DAO
+        // -----------------------------------------------------------------------
+        // 1. BLOCOS DE HORÁRIOS
+        // -----------------------------------------------------------------------
+        // Garante que a lista não seja nula para evitar erro no JSON.parse do JS
+        List<BlocoDiaDTO> blocos = PreAgendamentoDAO.ListarBlocos(id) ?? new List<BlocoDiaDTO>();
         hdnBlocosJson.Value = js.Serialize(blocos);
 
-        // Bloqueios
-        List<BloqueioDTO> bloqueios = PreAgendamentoDAO.ListarBloqueios(id); // Precisa existir no DAO
-        hdnBloqueiosJson.Value = js.Serialize(bloqueios);
+        // -----------------------------------------------------------------------
+        // 2. BLOQUEIOS (CORREÇÃO CS1503)
+        // -----------------------------------------------------------------------
+        List<BloqueioDTO> bloqueios = PreAgendamentoDAO.ListarBloqueios(id) ?? new List<BloqueioDTO>();
 
-        // Meses (Períodos)
-        List<PeriodoPreAgendamentoDTO> periodos = PreAgendamentoDAO.ListarPeriodos(id); // Precisa existir no DAO
+        var bloqueiosFormatados = bloqueios.Select(b => new
+        {
+            // Convert.ToDateTime garante que a string vire data, 
+            // para então formatarmos corretamente para o input do HTML
+            De = Convert.ToDateTime(b.de).ToString("yyyy-MM-dd"),
+            Ate = Convert.ToDateTime(b.ate).ToString("yyyy-MM-dd"),
+            Motivo = b.motivo
+        }).ToList();
+
+        hdnBloqueiosJson.Value = js.Serialize(bloqueiosFormatados);
+        // -----------------------------------------------------------------------
+        // 3. MESES (PERÍODOS)
+        // -----------------------------------------------------------------------
+        List<PeriodoPreAgendamentoDTO> periodos = PreAgendamentoDAO.ListarPeriodos(id) ?? new List<PeriodoPreAgendamentoDTO>();
         List<string> listaMeses = new List<string>();
         foreach (var p in periodos)
         {
@@ -133,7 +142,6 @@ public partial class publico_preagendamento : BasePage
         if (ddlClinica.Items.Count > 0)
             ddlClinica.SelectedIndex = 0;
 
-        // --- ALTERADO: Limpa HiddenFields em vez de DropDownList ---
         hdnCodProfissional.Value = string.Empty;
         hdnNomeProfissional.Value = string.Empty;
 
@@ -180,7 +188,6 @@ public partial class publico_preagendamento : BasePage
         return lista;
     }
 
-    // WebMethod para carregar profissionais da clínica selecionada (chamado via PageMethods)
     [System.Web.Services.WebMethod]
     public static List<ProfissionalDTO> ListarProfissionais(int codEspecialidade)
     {
@@ -192,9 +199,6 @@ public partial class publico_preagendamento : BasePage
         LimparCampos();
     }
 
-    // --------------------------------------------------------------------
-    // Lê o HiddenField de meses e devolve uma lista tipada (Ano / Mês)
-    // --------------------------------------------------------------------
     private List<PeriodoPreAgendamentoDTO> ObterPeriodosSelecionados()
     {
         List<PeriodoPreAgendamentoDTO> periodos = new List<PeriodoPreAgendamentoDTO>();
@@ -278,7 +282,7 @@ public partial class publico_preagendamento : BasePage
         dto.CodEspecialidade = codEspecialidade;
         dto.Clinica = ddlClinica.SelectedItem.Text;
 
-        // --- ALTERADO: Profissional (LÊ DO HIDDEN FIELD) ---
+        // Profissional
         int codProfissional;
         if (!int.TryParse(hdnCodProfissional.Value, out codProfissional) || codProfissional <= 0)
         {
@@ -287,7 +291,7 @@ public partial class publico_preagendamento : BasePage
         }
 
         dto.CodProfissional = codProfissional;
-        dto.Profissional = hdnNomeProfissional.Value; 
+        dto.Profissional = hdnNomeProfissional.Value;
 
         dto.Observacoes = txtObservacoes.Text;
         dto.Usuario = (Session["login"] ?? "desconhecido").ToString();
@@ -298,7 +302,7 @@ public partial class publico_preagendamento : BasePage
         bool modoEdicao = int.TryParse(hdnIdPreAgendamento.Value, out idExistente) && idExistente > 0;
         if (modoEdicao)
         {
-            dto.Id = idExistente; // Assumindo que seu DTO tem essa propriedade
+            dto.Id = idExistente;
         }
 
         try
@@ -307,14 +311,11 @@ public partial class publico_preagendamento : BasePage
 
             if (modoEdicao)
             {
-                // Atualiza (Método Atualizar precisa existir no DAO)
-                // Geralmente: Atualiza pai, deleta filhos antigos, insere novos
                 PreAgendamentoDAO.Atualizar(dto, blocos, bloqueios, periodos);
                 idGeradoOuAtualizado = idExistente;
             }
             else
             {
-                // Inserir novo
                 idGeradoOuAtualizado = PreAgendamentoDAO.Inserir(dto, blocos, bloqueios);
 
                 if (periodos != null && periodos.Count > 0)
