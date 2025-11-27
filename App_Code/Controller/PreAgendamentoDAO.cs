@@ -23,7 +23,7 @@ public class PreAgendamentoDAO
 
             try
             {
-                // 1. PAI (PreAgendamento) - Atenção: colunas e status
+                // 1. PAI (PreAgendamento)
                 string sqlPai = @"
                     INSERT INTO dbo.PreAgendamento
                         (data_preenchimento, observacoes, usuario, data_cadastro, 
@@ -78,14 +78,14 @@ public class PreAgendamentoDAO
                     }
                 }
 
-                // 3. BLOQUEIOS (PreAgendamentoBloqueio)
+                // 3. BLOQUEIOS (PreAgendamentoBloqueio) - ATUALIZADO PARA cod_motivo
                 if (bloqueios != null && bloqueios.Count > 0)
                 {
                     string sqlBloq = @"
                         INSERT INTO dbo.PreAgendamentoBloqueio
-                        (id_preagendamento, data_de, data_ate, motivo, status, data_cadastro)
+                        (id_preagendamento, data_de, data_ate, cod_motivo, status, data_cadastro)
                         VALUES
-                        (@id, @de, @ate, @motivo, 'A', GETDATE())";
+                        (@id, @de, @ate, @cod_motivo, 'A', GETDATE())";
 
                     foreach (var bl in bloqueios)
                     {
@@ -94,13 +94,17 @@ public class PreAgendamentoDAO
                             cmd.Parameters.AddWithValue("@id", novoId);
 
                             DateTime dtDe, dtAte;
-                            // Se falhar parse, assume data atual para não quebrar (ou trate como erro)
                             if (!DateTime.TryParse(bl.de, out dtDe)) dtDe = DateTime.Now;
                             if (!DateTime.TryParse(bl.ate, out dtAte)) dtAte = DateTime.Now;
 
                             cmd.Parameters.AddWithValue("@de", dtDe);
                             cmd.Parameters.AddWithValue("@ate", dtAte);
-                            cmd.Parameters.AddWithValue("@motivo", bl.motivo ?? "");
+
+                            // Grava o ID do motivo
+                            if (bl.codMotivo > 0)
+                                cmd.Parameters.AddWithValue("@cod_motivo", bl.codMotivo);
+                            else
+                                cmd.Parameters.AddWithValue("@cod_motivo", DBNull.Value);
 
                             cmd.ExecuteNonQuery();
                         }
@@ -130,8 +134,7 @@ public class PreAgendamentoDAO
 
             try
             {
-                // 1. ATUALIZA PAI (Dados básicos)
-                // Nota: data_atualizacao agora existe na tabela pai segundo sua imagem
+                // 1. ATUALIZA PAI
                 string sqlUpdatePai = @"
                     UPDATE dbo.PreAgendamento
                     SET data_preenchimento = @dt,
@@ -153,10 +156,7 @@ public class PreAgendamentoDAO
                     cmd.ExecuteNonQuery();
                 }
 
-                // ------------------------------------------------------------
-                // 2. DIAS (Soft Delete + Insert)
-                // ------------------------------------------------------------
-                // A. Inativar Antigos
+                // 2. DIAS
                 string sqlInatDias = @"
                     UPDATE dbo.PreAgendamentoDia 
                     SET status = 'I', data_exclusao = GETDATE() 
@@ -168,7 +168,6 @@ public class PreAgendamentoDAO
                     cmd.ExecuteNonQuery();
                 }
 
-                // B. Inserir Novos
                 if (blocos != null && blocos.Count > 0)
                 {
                     string sqlInsDia = @"
@@ -201,10 +200,7 @@ public class PreAgendamentoDAO
                     }
                 }
 
-                // ------------------------------------------------------------
-                // 3. BLOQUEIOS (Soft Delete + Insert)
-                // ------------------------------------------------------------
-                // A. Inativar
+                // 3. BLOQUEIOS - ATUALIZADO PARA cod_motivo
                 string sqlInatBloq = @"
                     UPDATE dbo.PreAgendamentoBloqueio 
                     SET status = 'I', data_exclusao = GETDATE() 
@@ -216,13 +212,12 @@ public class PreAgendamentoDAO
                     cmd.ExecuteNonQuery();
                 }
 
-                // B. Inserir Novos
                 if (bloqueios != null && bloqueios.Count > 0)
                 {
                     string sqlInsBloq = @"
                         INSERT INTO dbo.PreAgendamentoBloqueio
-                        (id_preagendamento, data_de, data_ate, motivo, status, data_cadastro)
-                        VALUES (@id, @de, @ate, @motivo, 'A', GETDATE())";
+                        (id_preagendamento, data_de, data_ate, cod_motivo, status, data_cadastro)
+                        VALUES (@id, @de, @ate, @cod_motivo, 'A', GETDATE())";
 
                     foreach (var bl in bloqueios)
                     {
@@ -236,16 +231,19 @@ public class PreAgendamentoDAO
 
                             cmd.Parameters.AddWithValue("@de", d1);
                             cmd.Parameters.AddWithValue("@ate", d2);
-                            cmd.Parameters.AddWithValue("@motivo", bl.motivo ?? "");
+
+                            // Grava o ID do motivo
+                            if (bl.codMotivo > 0)
+                                cmd.Parameters.AddWithValue("@cod_motivo", bl.codMotivo);
+                            else
+                                cmd.Parameters.AddWithValue("@cod_motivo", DBNull.Value);
+
                             cmd.ExecuteNonQuery();
                         }
                     }
                 }
 
-                // ------------------------------------------------------------
-                // 4. PERÍODOS (Soft Delete + Insert)
-                // ------------------------------------------------------------
-                // A. Inativar
+                // 4. PERÍODOS
                 string sqlInatPer = @"
                     UPDATE dbo.PreAgendamentoPeriodo 
                     SET Status = 'I' , DataExclusao = GETDATE()
@@ -257,7 +255,6 @@ public class PreAgendamentoDAO
                     cmd.ExecuteNonQuery();
                 }
 
-                // B. Inserir Novos (Logica existente de calculo de datas)
                 if (periodos != null && periodos.Count > 0)
                 {
                     string sqlInsPer = @"
@@ -267,7 +264,6 @@ public class PreAgendamentoDAO
 
                     foreach (var p in periodos)
                     {
-                        // Calcula Inicio e Fim
                         DateTime dIni = new DateTime(p.Ano, p.Mes, 1);
                         DateTime dFim = dIni.AddMonths(1).AddDays(-1);
 
@@ -293,6 +289,7 @@ public class PreAgendamentoDAO
             }
         }
     }
+
     public static List<PreAgendamentoDTO> ListarTodos()
     {
         var lista = new List<PreAgendamentoDTO>();
@@ -300,19 +297,19 @@ public class PreAgendamentoDAO
         using (SqlConnection con = new SqlConnection(connStr))
         {
             string sql = @"
-SELECT  
-    p.id,
-    p.data_preenchimento,
-    p.cod_especialidade,
-    e.nm_especialidade        AS clinica,
-    p.cod_profissional,
-    pr.nome_profissional      AS profissional
-FROM dbo.PreAgendamento p
-LEFT JOIN dbo.Especialidade e
-       ON e.cod_especialidade = p.cod_especialidade
-LEFT JOIN dbo.Profissional pr
-       ON pr.cod_profissional = p.cod_profissional
-ORDER BY p.id DESC;";
+                SELECT  
+                    p.id,
+                    p.data_preenchimento,
+                    p.cod_especialidade,
+                    e.nm_especialidade        AS clinica,
+                    p.cod_profissional,
+                    pr.nome_profissional      AS profissional
+                FROM dbo.PreAgendamento p
+                LEFT JOIN dbo.Especialidade e
+                       ON e.cod_especialidade = p.cod_especialidade
+                LEFT JOIN dbo.Profissional pr
+                       ON pr.cod_profissional = p.cod_profissional
+                ORDER BY p.id DESC;";
 
             using (SqlCommand cmd = new SqlCommand(sql, con))
             {
@@ -325,13 +322,10 @@ ORDER BY p.id DESC;";
                         {
                             Id = Convert.ToInt32(dr["id"]),
                             DataPreenchimento = Convert.ToDateTime(dr["data_preenchimento"]),
-
-                            // nomes (vindos dos JOINs, com alias)
                             Clinica = dr["clinica"] == DBNull.Value ? null : dr["clinica"].ToString(),
                             Profissional = dr["profissional"] == DBNull.Value ? null : dr["profissional"].ToString()
                         };
 
-                        // códigos gravados na tabela
                         if (dr["cod_especialidade"] != DBNull.Value)
                             dto.CodEspecialidade = Convert.ToInt32(dr["cod_especialidade"]);
 
@@ -343,13 +337,8 @@ ORDER BY p.id DESC;";
                 }
             }
         }
-
         return lista;
     }
-
-    // =================================================================================
-    // LEITURA (Listar Blocos, Bloqueios e Periodos) - FILTRAR ATIVOS!
-    // =================================================================================
 
     public static List<BlocoDiaDTO> ListarBlocos(int idPre)
     {
@@ -362,7 +351,7 @@ ORDER BY p.id DESC;";
                 FROM dbo.PreAgendamentoDia d
                 LEFT JOIN dbo.SubEspecialidade s ON d.cod_subespecialidade = s.cod_subespecialidade
                 WHERE d.id_preagendamento = @id 
-                  AND d.status = 'A'"; // <--- IMPORTANTE: Filtrar ativos
+                  AND d.status = 'A'";
 
             using (SqlCommand cmd = new SqlCommand(sql, con))
             {
@@ -391,16 +380,20 @@ ORDER BY p.id DESC;";
         return lista;
     }
 
+    // =================================================================================
+    // LEITURA DE BLOQUEIOS - ATUALIZADO PARA cod_motivo
+    // =================================================================================
     public static List<BloqueioDTO> ListarBloqueios(int idPre)
     {
         var lista = new List<BloqueioDTO>();
         using (SqlConnection con = new SqlConnection(connStr))
         {
+            // Seleciona o cod_motivo em vez da string motivo
             string sql = @"
-                SELECT data_de, data_ate, motivo
+                SELECT data_de, data_ate, cod_motivo
                 FROM dbo.PreAgendamentoBloqueio
                 WHERE id_preagendamento = @id 
-                  AND status = 'A'"; // <--- IMPORTANTE
+                  AND status = 'A'";
 
             using (SqlCommand cmd = new SqlCommand(sql, con))
             {
@@ -413,7 +406,11 @@ ORDER BY p.id DESC;";
                         var b = new BloqueioDTO();
                         if (dr["data_de"] != DBNull.Value) b.de = Convert.ToDateTime(dr["data_de"]).ToString("yyyy-MM-dd");
                         if (dr["data_ate"] != DBNull.Value) b.ate = Convert.ToDateTime(dr["data_ate"]).ToString("yyyy-MM-dd");
-                        b.motivo = dr["motivo"].ToString();
+
+                        // Lê o ID do motivo para o DTO
+                        if (dr["cod_motivo"] != DBNull.Value)
+                            b.codMotivo = Convert.ToInt32(dr["cod_motivo"]);
+
                         lista.Add(b);
                     }
                 }
@@ -431,7 +428,7 @@ ORDER BY p.id DESC;";
                 SELECT Ano, Mes
                 FROM dbo.PreAgendamentoPeriodo
                 WHERE IdPreAgendamento = @id 
-                  AND Status = 'A'"; // <--- IMPORTANTE
+                  AND Status = 'A'";
 
             using (SqlCommand cmd = new SqlCommand(sql, con))
             {
@@ -452,19 +449,11 @@ ORDER BY p.id DESC;";
         return lista;
     }
 
-    // =================================================================================
-    // INSERIR PERIODOS (Caso seja usado fora do Inserir/Atualizar principal)
-    // =================================================================================
     public static void InserirPeriodos(int idPre, List<PeriodoPreAgendamentoDTO> periodos)
     {
         if (periodos == null || periodos.Count == 0) return;
 
-        // Se estiver usando esta função avulsa (num contexto de Insert novo), apenas insere.
-        // Se for atualização, cuidado para não duplicar ativos. 
-        // Vou assumir que esta função é usada apenas no fluxo de INSERT inicial.
-
         string user = "sistema";
-
         if (HttpContext.Current != null &&
             HttpContext.Current.Session != null &&
             HttpContext.Current.Session["login"] != null)
@@ -499,9 +488,6 @@ ORDER BY p.id DESC;";
         }
     }
 
-    // Métodos auxiliares (ObterPorId, ListarProfissionais, etc) mantêm a lógica,
-    // apenas garanta que eles leiam as colunas corretas se mudou nome.
-    // ...
     public static PreAgendamentoDTO ObterPorId(int id)
     {
         PreAgendamentoDTO dto = null;
@@ -509,7 +495,7 @@ ORDER BY p.id DESC;";
         {
             string sql = @"
                 SELECT id, data_preenchimento, cod_especialidade, cod_profissional, observacoes, usuario, data_cadastro
-                FROM dbo.PreAgendamento WHERE id = @id"; // Se tiver soft delete no pai, adicione AND status = 'A'
+                FROM dbo.PreAgendamento WHERE id = @id";
 
             using (SqlCommand cmd = new SqlCommand(sql, con))
             {
@@ -527,9 +513,6 @@ ORDER BY p.id DESC;";
                         dto.Observacoes = dr["observacoes"] == DBNull.Value ? null : dr["observacoes"].ToString();
                         dto.Usuario = dr["usuario"].ToString();
                         dto.DataCadastro = Convert.ToDateTime(dr["data_cadastro"]);
-
-                        // Se precisar buscar nome do profissional/clinica, faça joins ou busque separado
-                        // Para edição, precisamos principalmente dos IDs para preencher os combos/hiddens
                     }
                 }
             }
@@ -539,7 +522,6 @@ ORDER BY p.id DESC;";
 
     public static List<ProfissionalDTO> ListarProfissionaisPorEspecialidade(int codEspecialidade)
     {
-        // Mantém igual ao seu código anterior
         List<ProfissionalDTO> lista = new List<ProfissionalDTO>();
         using (SqlConnection con = new SqlConnection(connStr))
         {

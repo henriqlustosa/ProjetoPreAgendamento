@@ -297,6 +297,7 @@
         var blocoIndex = 0;
         var bloqueioIndex = 0;
         var subespecialidadesCache = null;
+        var motivosBloqueioCache = null; // CACHE PARA OS MOTIVOS
         var mesesSelecionados = new Map();
 
         // ============================================================
@@ -362,6 +363,26 @@
         // ============================================================
         // AJAX E AUXILIARES
         // ============================================================
+
+        function carregarMotivosBloqueio(callback) {
+            PageMethods.ListarMotivosBloqueio(
+                function (result) {
+                    motivosBloqueioCache = result;
+                    if (callback) callback();
+                },
+                function (e) { alert('Erro ao carregar motivos: ' + e.get_message()); }
+            );
+        }
+
+        function preencherSelectMotivos($select) {
+            $select.empty().append($('<option>').val('').text('Selecione...'));
+            if (motivosBloqueioCache) {
+                $.each(motivosBloqueioCache, function (i, item) {
+                    $select.append($('<option>').val(item.CodMotivo).text(item.NmMotivo));
+                });
+            }
+        }
+
         function carregarProfissionaisPorClinica(codPreSelecionado = null) {
             var ddlClinica = $('#<%= ddlClinica.ClientID %>');
             var selProf = $('#selProfissional');
@@ -386,13 +407,11 @@
                     }
                     if (codPreSelecionado) {
                         selProf.val(codPreSelecionado);
-                        // Se o valor setado não existir na lista, adiciona manualmente para não perder visualmente
                         if (!selProf.val()) {
                             var nomeSalvo = $('#<%= hdnNomeProfissional.ClientID %>').val();
                             selProf.append($('<option/>', { value: codPreSelecionado, text: nomeSalvo, selected: true }));
                         }
                     }
-                    // Garante que o hidden nome está atualizado
                     var nomeSelecionado = selProf.find("option:selected").text();
                     if (selProf.val()) $('#<%= hdnNomeProfissional.ClientID %>').val(nomeSelecionado);
                 },
@@ -472,11 +491,6 @@
                 '  <div class="col-md-3"><label>Até</label><input type="date" class="form-control campo-bloq-ate" /></div>' +
                 '  <div class="col-md-5"><label>Motivo</label><select class="form-control campo-bloq-motivo">' +
                 '      <option value="">Selecione...</option>' +
-                '      <option value="Férias">Férias</option>' +
-                '      <option value="Congresso">Congresso</option>' +
-                '      <option value="Ausência Justificada">Ausência Justificada</option>' +
-                '      <option value="Agenda Suspensa">Agenda Suspensa</option>' +
-                '      <option value="Bloqueio Administrativo">Bloqueio Administrativo</option>' +
                 '  </select></div>' +
                 '  <div class="col-md-1 d-flex align-items-end"><button type="button" class="btn btn-sm btn-outline-danger btn-remover-bloqueio"><i class="fas fa-times"></i></button></div>' +
                 '</div>';
@@ -487,7 +501,9 @@
             $('#bloqueiosContainer').append(html);
             var $novo = $('#bloqueiosContainer .bloco-bloqueio').last();
 
-            // Validação visual rápida
+            var $selectMotivo = $novo.find('.campo-bloq-motivo');
+            preencherSelectMotivos($selectMotivo);
+
             $novo.find('.campo-bloq-de, .campo-bloq-ate, .campo-bloq-motivo').on('blur change', function () {
                 var $campo = $(this);
                 if (!$campo.val()) {
@@ -562,7 +578,6 @@
                 var subId = $b.find('.campoSubespecialidade').val();
                 var subTexto = $b.find('.campoSubespecialidade option:selected').text();
 
-                // DEFINIÇÃO DAS VARIÁVEIS DE CONTROLE
                 var temNovas = (cNovas && cNovas.trim() !== "");
                 var temRetorno = (cRetorno && cRetorno.trim() !== "");
 
@@ -572,7 +587,7 @@
 
                 if (!diaSemana) { msgErroBloco.push('Dia da Semana'); valido = false; $b.find('.campo-dia-semana').addClass('is-invalid'); }
                 if (!horario) { msgErroBloco.push('Horário'); valido = false; $b.find('.campo-horario').addClass('is-invalid'); }
-                
+
                 if (!temNovas && !temRetorno) {
                     msgErroBloco.push('Qtd. Consultas'); valido = false;
                     $b.find('.campo-consultas-novas, .campo-consultas-retorno').addClass('is-invalid');
@@ -619,13 +634,13 @@
                 var $b = $(this);
                 var de = $b.find('.campo-bloq-de').val();
                 var ate = $b.find('.campo-bloq-ate').val();
-                var motivo = $b.find('.campo-bloq-motivo').val();
+                var motivoId = $b.find('.campo-bloq-motivo').val();
                 var prefixo = 'Bloqueio ' + (idx + 1) + ': ';
                 var erroLinha = false;
 
                 if (!de) { erros.push(prefixo + 'falta data "De".'); erroLinha = true; $b.find('.campo-bloq-de').addClass('is-invalid'); }
                 if (!ate) { erros.push(prefixo + 'falta data "Até".'); erroLinha = true; $b.find('.campo-bloq-ate').addClass('is-invalid'); }
-                if (!motivo) { erros.push(prefixo + 'falta "Motivo".'); erroLinha = true; $b.find('.campo-bloq-motivo').addClass('is-invalid'); }
+                if (!motivoId) { erros.push(prefixo + 'falta "Motivo".'); erroLinha = true; $b.find('.campo-bloq-motivo').addClass('is-invalid'); }
 
                 if (!erroLinha && de && ate) {
                     if (de > ate) {
@@ -645,8 +660,8 @@
                     }
                 }
 
-                if (!erroLinha && de && ate && motivo) {
-                    bloqueios.push({ De: de, Ate: ate, Motivo: motivo });
+                if (!erroLinha && de && ate && motivoId) {
+                    bloqueios.push({ De: de, Ate: ate, CodMotivo: parseInt(motivoId) });
                 } else {
                     $b.addClass('erro-bloco');
                 }
@@ -664,7 +679,7 @@
         }
 
         // ============================================================
-        // CARREGAR DADOS EDIÇÃO (ATUALIZADO)
+        // CARREGAR DADOS EDIÇÃO (CORRIGIDO)
         // ============================================================
         function carregarDadosEdicao() {
             var codClinica = $('#<%= ddlClinica.ClientID %>').val();
@@ -711,7 +726,7 @@
                 } catch (e) { console.error("Erro JSON Blocos", e); }
             }
 
-            // CARREGA BLOQUEIOS (ATUALIZADO PARA DATAS EM STRING)
+            // CARREGA BLOQUEIOS (CORREÇÃO APLICADA AQUI)
             var jsonBloqueios = $('#<%= hdnBloqueiosJson.ClientID %>').val();
             if (jsonBloqueios && jsonBloqueios !== '[]' && jsonBloqueios !== 'null') {
                 try {
@@ -723,15 +738,20 @@
                         $('#bloqueiosContainer').append(html);
                         var $row = $('#bloqueiosContainer .bloco-bloqueio').last();
 
-                        // C# agora manda "yyyy-MM-dd", que é exatamente o que o input date precisa
-                        // Nenhuma conversão adicional é necessária aqui.
                         var de = b.De || b.de;
                         var ate = b.Ate || b.ate;
-                        var motivo = b.Motivo || b.motivo;
+                        var codMotivo = b.CodMotivo || b.codMotivo;
 
                         $row.find('.campo-bloq-de').val(de);
                         $row.find('.campo-bloq-ate').val(ate);
-                        $row.find('.campo-bloq-motivo').val(motivo);
+                        
+                        // CORREÇÃO: PREENCHE AS OPÇÕES ANTES DE SELECIONAR O VALOR
+                        var $ddlMotivo = $row.find('.campo-bloq-motivo');
+                        preencherSelectMotivos($ddlMotivo);
+                        
+                        // Agora seleciona o valor correto
+                        $ddlMotivo.val(codMotivo);
+                        
                         bloqueioIndex++;
                     });
                 } catch (e) { console.error("Erro JSON Bloqueios", e); }
@@ -766,6 +786,18 @@
         $(function () {
             preencherDropdownMeses();
 
+            var idEdicao = $('#<%= hdnIdPreAgendamento.ClientID %>').val();
+
+            // 1. Carrega os Motivos do Backend PRIMEIRO
+            carregarMotivosBloqueio(function() {
+                // 2. Só DEPOIS verifica se é edição (para garantir que os dropdowns possam ser populados)
+                if (idEdicao) {
+                    carregarDadosEdicao();
+                } else {
+                    adicionarBloco();
+                }
+            });
+
             $('#btnAddBloco').click(adicionarBloco);
             $('#btnAddBloqueio').click(adicionarBloqueio);
 
@@ -784,7 +816,6 @@
                 $ddl.removeClass('is-invalid');
             });
 
-            // DELEGAÇÃO DE EVENTOS PARA BOTÕES DE REMOÇÃO (Para funcionar com elementos dinâmicos)
             $('#containerMesesSelecionados').on('click', '.btn-remover-mes', function () {
                 var div = $(this).closest('[data-mes]');
                 var chave = div.attr('data-mes');
@@ -801,7 +832,6 @@
                 $(this).closest('.bloco-dia-wrapper').remove();
             });
 
-            // REMOVE ERRO VISUAL AO DIGITAR
             $('#blocosContainer').on('input', '.campo-consultas-novas, .campo-consultas-retorno', function () {
                 var $wrapper = $(this).closest('.bloco-dia');
                 var $novas = $wrapper.find('.campo-consultas-novas');
@@ -835,13 +865,6 @@
                 $('#<%= hdnNomeProfissional.ClientID %>').val(nome);
                 if (cod) $(this).removeClass('is-invalid');
             });
-
-            var idEdicao = $('#<%= hdnIdPreAgendamento.ClientID %>').val();
-            if (idEdicao) {
-                carregarDadosEdicao();
-            } else {
-                adicionarBloco();
-            }
         });
     </script>
 </asp:Content>

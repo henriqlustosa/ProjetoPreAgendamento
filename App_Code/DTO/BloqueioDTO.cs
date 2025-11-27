@@ -5,5 +5,5 @@ public class BloqueioDTO
 {
     public string de { get; set; }
     public string ate { get; set; }
-    public string motivo { get; set; }
+    public int codMotivo { get; set; }
 }
