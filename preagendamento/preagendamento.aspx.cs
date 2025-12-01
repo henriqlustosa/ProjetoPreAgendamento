@@ -7,12 +7,7 @@ using System.Linq;
 using System.Web.Script.Serialization;
 using System.Web.UI;
 
-// DTO Auxiliar para o Combo de Motivos
-public class MotivoBloqueioDTO
-{
-    public int CodMotivo { get; set; }
-    public string NmMotivo { get; set; }
-}
+
 
 public partial class publico_preagendamento : BasePage
 {
@@ -275,8 +270,10 @@ public partial class publico_preagendamento : BasePage
             int idGeradoOuAtualizado;
             if (modoEdicao)
             {
+                // Recupera usuário logado
+                string usuarioLogado = Session["Login"] != null ? Session["Login"].ToString() : "Desconhecido";
                 // ATENÇÃO: Verifique se seu método DAO.Atualizar aceita os DTOs com CodMotivo (int)
-                PreAgendamentoDAO.Atualizar(dto, blocos, bloqueios, periodos);
+                PreAgendamentoDAO.Atualizar(dto, blocos, bloqueios, periodos, usuarioLogado);
                 idGeradoOuAtualizado = idExistente;
             }
             else

@@ -47,10 +47,10 @@
             transition: all 0.2s;
         }
 
-        .btn-hspm-edit:hover {
-            background-color: #1f2f40;
-            color: #fff;
-        }
+            .btn-hspm-edit:hover {
+                background-color: #1f2f40;
+                color: #fff;
+            }
 
         /* Botão Excluir (Vermelho suave ou outline) */
         .btn-hspm-delete {
@@ -64,10 +64,10 @@
             transition: all 0.2s;
         }
 
-        .btn-hspm-delete:hover {
-            background-color: #dc3545;
-            color: #fff;
-        }
+            .btn-hspm-delete:hover {
+                background-color: #dc3545;
+                color: #fff;
+            }
 
         /* Espaçamento do container */
         .listagem-container {
@@ -82,15 +82,16 @@
 
         <div class="card card-hspm">
             <div class="card-header card-header-hspm">
-                <i class="fas fa-list-ul mr-2"></i> Pré-Agendamentos Cadastrados
+                <i class="fas fa-list-ul mr-2"></i>Pré-Agendamentos Cadastrados
             </div>
 
             <div class="card-body">
-                <asp:GridView ID="gvLista" 
-                              CssClass="table table-hover table-custom mb-0"
-                              GridLines="None"
-                              AutoGenerateColumns="false" 
-                              runat="server">
+                <asp:GridView ID="gvLista"
+                    CssClass="table table-hover table-custom mb-0"
+                    GridLines="None"
+                    AutoGenerateColumns="false"
+                    OnRowCommand="gvLista_RowCommand"
+                    runat="server">
 
                     <Columns>
                         <asp:BoundField DataField="Id" HeaderText="ID">
@@ -103,7 +104,7 @@
                         </asp:BoundField>
 
                         <asp:BoundField DataField="Clinica" HeaderText="Clínica" />
-                        
+
                         <asp:BoundField DataField="Profissional" HeaderText="Profissional" />
 
                         <asp:TemplateField HeaderText="Ações">
@@ -111,7 +112,7 @@
                             <HeaderStyle HorizontalAlign="Center" />
                             <ItemTemplate>
                                 <a href='preagendamento.aspx?id=<%# Eval("Id") %>' class="btn-hspm-edit">
-                                    <i class="fas fa-edit"></i> Editar
+                                    <i class="fas fa-edit"></i>Editar
                                 </a>
 
                                 <asp:LinkButton runat="server" CssClass="btn-hspm-delete ml-2"

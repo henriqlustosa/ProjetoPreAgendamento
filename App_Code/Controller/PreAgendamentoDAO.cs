@@ -8,7 +8,114 @@ using System.Web;
 public class PreAgendamentoDAO
 {
     private static readonly string connStr = ConfigurationManager.ConnectionStrings["gtaConnectionString"].ConnectionString;
+    public static void Aprovar(int id, string usuarioLogado)
+    {
+        using (SqlConnection con = new SqlConnection(connStr))
+        {
+            // Atualiza status para 'V' (Verificado/Aprovado)
+            // Também registra quem aprovou e quando
+            string sql = @"
+            UPDATE dbo.PreAgendamento 
+            SET status = 'V', 
+                usuario_atualizacao = @user, 
+                data_atualizacao = GETDATE() 
+            WHERE id = @id";
 
+            using (SqlCommand cmd = new SqlCommand(sql, con))
+            {
+                cmd.Parameters.AddWithValue("@id", id);
+
+                if (string.IsNullOrEmpty(usuarioLogado))
+                    cmd.Parameters.AddWithValue("@user", DBNull.Value);
+                else
+                    cmd.Parameters.AddWithValue("@user", usuarioLogado);
+
+                con.Open();
+                cmd.ExecuteNonQuery();
+            }
+        }
+    }
+    public static void Excluir(int id, string usuarioLogado)
+    {
+        using (SqlConnection con = new SqlConnection(connStr))
+        {
+            con.Open();
+            SqlTransaction tran = con.BeginTransaction();
+
+            try
+            {
+                // =================================================================
+                // 1. INATIVAR TABELAS FILHAS
+                // =================================================================
+
+                // 1.1 Dias
+                string sqlInatDias = @"
+                UPDATE dbo.PreAgendamentoDia 
+                SET status = 'I', data_exclusao = GETDATE() 
+                WHERE id_preagendamento = @id AND status = 'A'";
+
+                using (SqlCommand cmd = new SqlCommand(sqlInatDias, con, tran))
+                {
+                    cmd.Parameters.AddWithValue("@id", id);
+                    cmd.ExecuteNonQuery();
+                }
+
+                // 1.2 Bloqueios
+                string sqlInatBloq = @"
+                UPDATE dbo.PreAgendamentoBloqueio 
+                SET status = 'I', data_exclusao = GETDATE() 
+                WHERE id_preagendamento = @id AND status = 'A'";
+
+                using (SqlCommand cmd = new SqlCommand(sqlInatBloq, con, tran))
+                {
+                    cmd.Parameters.AddWithValue("@id", id);
+                    cmd.ExecuteNonQuery();
+                }
+
+                // 1.3 Períodos (Atenção ao Case Sensitivity das colunas conforme seu método Atualizar)
+                string sqlInatPer = @"
+                UPDATE dbo.PreAgendamentoPeriodo 
+                SET Status = 'I', DataExclusao = GETDATE()
+                WHERE IdPreAgendamento = @id AND Status = 'A'";
+
+                using (SqlCommand cmd = new SqlCommand(sqlInatPer, con, tran))
+                {
+                    cmd.Parameters.AddWithValue("@id", id);
+                    cmd.ExecuteNonQuery();
+                }
+
+                // =================================================================
+                // 2. INATIVAR TABELA PAI (PreAgendamento)
+                // =================================================================
+                string sqlPai = @"UPDATE dbo.PreAgendamento 
+                              SET data_exclusao = GETDATE(), 
+                                  usuario_excluir = @usuario,
+                                  status = 'I'
+                              WHERE id = @id";
+
+                using (SqlCommand cmd = new SqlCommand(sqlPai, con, tran))
+                {
+                    cmd.Parameters.AddWithValue("@id", id);
+
+                    if (string.IsNullOrEmpty(usuarioLogado))
+                        cmd.Parameters.AddWithValue("@usuario", DBNull.Value);
+                    else
+                        cmd.Parameters.AddWithValue("@usuario", usuarioLogado);
+
+                    cmd.ExecuteNonQuery();
+                }
+
+                // Se chegou até aqui sem erro, confirma tudo no banco
+                tran.Commit();
+            }
+            catch (Exception ex)
+            {
+                // Se der erro em qualquer etapa, desfaz tudo
+                tran.Rollback();
+                throw new Exception("Erro ao excluir registro e dependências: " + ex.Message);
+            }
+        }
+    }
     // =================================================================================
     // INSERT (Novo Registro)
     // =================================================================================
@@ -123,9 +230,9 @@ public class PreAgendamentoDAO
     }
 
     // =================================================================================
-    // UPDATE (Atualização com Soft Delete)
+    // UPDATE (Atualização com Soft Delete e Rastreio de Usuário)
     // =================================================================================
-    public static void Atualizar(PreAgendamentoDTO dto, List<BlocoDiaDTO> blocos, List<BloqueioDTO> bloqueios, List<PeriodoPreAgendamentoDTO> periodos)
+    public static void Atualizar(PreAgendamentoDTO dto, List<BlocoDiaDTO> blocos, List<BloqueioDTO> bloqueios, List<PeriodoPreAgendamentoDTO> periodos, string usuarioLogado)
     {
         using (SqlConnection con = new SqlConnection(connStr))
         {
@@ -134,16 +241,18 @@ public class PreAgendamentoDAO
 
             try
             {
-                // 1. ATUALIZA PAI
+                // 1. ATUALIZA PAI (PreAgendamento)
+                // Adicionado o campo usuario_atualizacao
                 string sqlUpdatePai = @"
-                    UPDATE dbo.PreAgendamento
-                    SET data_preenchimento = @dt,
-                        cod_especialidade = @esp,
-                        cod_profissional = @prof,
-                        observacoes = @obs,
-                        usuario = @user,
-                        data_atualizacao = GETDATE()
-                    WHERE id = @id";
+                UPDATE dbo.PreAgendamento
+                SET data_preenchimento = @dt,
+                    cod_especialidade = @esp,
+                    cod_profissional = @prof,
+                    observacoes = @obs,
+                    usuario = @user,
+                    usuario_atualizacao = @usuario_atualizacao, 
+                    data_atualizacao = GETDATE()
+                WHERE id = @id";
 
                 using (SqlCommand cmd = new SqlCommand(sqlUpdatePai, con, tran))
                 {
@@ -152,15 +261,22 @@ public class PreAgendamentoDAO
                     cmd.Parameters.AddWithValue("@esp", dto.CodEspecialidade);
                     cmd.Parameters.AddWithValue("@prof", dto.CodProfissional);
                     cmd.Parameters.AddWithValue("@obs", dto.Observacoes ?? (object)DBNull.Value);
-                    cmd.Parameters.AddWithValue("@user", dto.Usuario);
+                    cmd.Parameters.AddWithValue("@user", dto.Usuario); // Usuário 'dono' do registro (se aplicável)
+
+                    // Tratamento do Usuário que está fazendo a ATUALIZAÇÃO agora
+                    if (string.IsNullOrEmpty(usuarioLogado))
+                        cmd.Parameters.AddWithValue("@usuario_atualizacao", DBNull.Value);
+                    else
+                        cmd.Parameters.AddWithValue("@usuario_atualizacao", usuarioLogado);
+
                     cmd.ExecuteNonQuery();
                 }
 
                 // 2. DIAS
                 string sqlInatDias = @"
-                    UPDATE dbo.PreAgendamentoDia 
-                    SET status = 'I', data_exclusao = GETDATE() 
-                    WHERE id_preagendamento = @id AND status = 'A'";
+                UPDATE dbo.PreAgendamentoDia 
+                SET status = 'I', data_exclusao = GETDATE() 
+                WHERE id_preagendamento = @id AND status = 'A'";
 
                 using (SqlCommand cmd = new SqlCommand(sqlInatDias, con, tran))
                 {
@@ -171,10 +287,10 @@ public class PreAgendamentoDAO
                 if (blocos != null && blocos.Count > 0)
                 {
                     string sqlInsDia = @"
-                        INSERT INTO dbo.PreAgendamentoDia
-                        (id_preagendamento, dia_semana, horario, consultas_novas, consultas_retorno, 
-                         cod_subespecialidade, status, data_cadastro)
-                        VALUES (@id, @dia, @hor, @nov, @ret, @sub, 'A', GETDATE())";
+                    INSERT INTO dbo.PreAgendamentoDia
+                    (id_preagendamento, dia_semana, horario, consultas_novas, consultas_retorno, 
+                     cod_subespecialidade, status, data_cadastro)
+                    VALUES (@id, @dia, @hor, @nov, @ret, @sub, 'A', GETDATE())";
 
                     foreach (var b in blocos)
                     {
@@ -200,11 +316,11 @@ public class PreAgendamentoDAO
                     }
                 }
 
-                // 3. BLOQUEIOS - ATUALIZADO PARA cod_motivo
+                // 3. BLOQUEIOS
                 string sqlInatBloq = @"
-                    UPDATE dbo.PreAgendamentoBloqueio 
-                    SET status = 'I', data_exclusao = GETDATE() 
-                    WHERE id_preagendamento = @id AND status = 'A'";
+                UPDATE dbo.PreAgendamentoBloqueio 
+                SET status = 'I', data_exclusao = GETDATE() 
+                WHERE id_preagendamento = @id AND status = 'A'";
 
                 using (SqlCommand cmd = new SqlCommand(sqlInatBloq, con, tran))
                 {
@@ -215,9 +331,9 @@ public class PreAgendamentoDAO
                 if (bloqueios != null && bloqueios.Count > 0)
                 {
                     string sqlInsBloq = @"
-                        INSERT INTO dbo.PreAgendamentoBloqueio
-                        (id_preagendamento, data_de, data_ate, cod_motivo, status, data_cadastro)
-                        VALUES (@id, @de, @ate, @cod_motivo, 'A', GETDATE())";
+                    INSERT INTO dbo.PreAgendamentoBloqueio
+                    (id_preagendamento, data_de, data_ate, cod_motivo, status, data_cadastro)
+                    VALUES (@id, @de, @ate, @cod_motivo, 'A', GETDATE())";
 
                     foreach (var bl in bloqueios)
                     {
@@ -232,7 +348,6 @@ public class PreAgendamentoDAO
                             cmd.Parameters.AddWithValue("@de", d1);
                             cmd.Parameters.AddWithValue("@ate", d2);
 
-                            // Grava o ID do motivo
                             if (bl.codMotivo > 0)
                                 cmd.Parameters.AddWithValue("@cod_motivo", bl.codMotivo);
                             else
@@ -245,9 +360,9 @@ public class PreAgendamentoDAO
 
                 // 4. PERÍODOS
                 string sqlInatPer = @"
-                    UPDATE dbo.PreAgendamentoPeriodo 
-                    SET Status = 'I' , DataExclusao = GETDATE()
-                    WHERE IdPreAgendamento = @id AND Status = 'A'";
+                UPDATE dbo.PreAgendamentoPeriodo 
+                SET Status = 'I' , DataExclusao = GETDATE()
+                WHERE IdPreAgendamento = @id AND Status = 'A'";
 
                 using (SqlCommand cmd = new SqlCommand(sqlInatPer, con, tran))
                 {
@@ -257,10 +372,12 @@ public class PreAgendamentoDAO
 
                 if (periodos != null && periodos.Count > 0)
                 {
+                    // Nota: Mantivemos @user (dto.Usuario) aqui pois geralmente é o 'dono' do registro. 
+                    // Se quiser que seja o usuário que está editando, troque @user por usuarioLogado aqui também.
                     string sqlInsPer = @"
-                        INSERT INTO dbo.PreAgendamentoPeriodo
-                        (IdPreAgendamento, Ano, Mes, DataInicio, DataFim, Status, DataCadastro, UsuarioCadastro)
-                        VALUES (@id, @ano, @mes, @dIni, @dFim, 'A', GETDATE(), @user)";
+                    INSERT INTO dbo.PreAgendamentoPeriodo
+                    (IdPreAgendamento, Ano, Mes, DataInicio, DataFim, Status, DataCadastro, UsuarioCadastro)
+                    VALUES (@id, @ano, @mes, @dIni, @dFim, 'A', GETDATE(), @user)";
 
                     foreach (var p in periodos)
                     {
@@ -309,6 +426,7 @@ public class PreAgendamentoDAO
                        ON e.cod_especialidade = p.cod_especialidade
                 LEFT JOIN dbo.Profissional pr
                        ON pr.cod_profissional = p.cod_profissional
+                WHERE p.status = 'A'
                 ORDER BY p.id DESC;";
 
             using (SqlCommand cmd = new SqlCommand(sql, con))
@@ -493,9 +611,22 @@ public class PreAgendamentoDAO
         PreAgendamentoDTO dto = null;
         using (SqlConnection con = new SqlConnection(connStr))
         {
+            // CORREÇÃO: Adicionados JOINs para trazer os nomes (Clínica e Profissional)
             string sql = @"
-                SELECT id, data_preenchimento, cod_especialidade, cod_profissional, observacoes, usuario, data_cadastro
-                FROM dbo.PreAgendamento WHERE id = @id";
+            SELECT 
+                p.id, 
+                p.data_preenchimento, 
+                p.cod_especialidade, 
+                e.nm_especialidade AS nome_especialidade, -- Traz o nome da clínica
+                p.cod_profissional, 
+                pr.nome_profissional,                     -- Traz o nome do médico
+                p.observacoes, 
+                p.usuario, 
+                p.data_cadastro
+            FROM dbo.PreAgendamento p
+            LEFT JOIN dbo.Especialidade e ON p.cod_especialidade = e.cod_especialidade
+            LEFT JOIN dbo.Profissional pr ON p.cod_profissional = pr.cod_profissional
+            WHERE p.id = @id";
 
             using (SqlCommand cmd = new SqlCommand(sql, con))
             {
@@ -508,18 +639,27 @@ public class PreAgendamentoDAO
                         dto = new PreAgendamentoDTO();
                         dto.Id = Convert.ToInt32(dr["id"]);
                         dto.DataPreenchimento = Convert.ToDateTime(dr["data_preenchimento"]);
-                        dto.CodEspecialidade = Convert.ToInt32(dr["cod_especialidade"]);
-                        dto.CodProfissional = Convert.ToInt32(dr["cod_profissional"]);
                         dto.Observacoes = dr["observacoes"] == DBNull.Value ? null : dr["observacoes"].ToString();
                         dto.Usuario = dr["usuario"].ToString();
                         dto.DataCadastro = Convert.ToDateTime(dr["data_cadastro"]);
+
+                        if (dr["cod_especialidade"] != DBNull.Value)
+                        {
+                            dto.CodEspecialidade = Convert.ToInt32(dr["cod_especialidade"]);
+                            dto.Clinica = dr["nome_especialidade"].ToString(); // Preenche o nome da clínica
+                        }
+
+                        if (dr["cod_profissional"] != DBNull.Value)
+                        {
+                            dto.CodProfissional = Convert.ToInt32(dr["cod_profissional"]);
+                            dto.Profissional = dr["nome_profissional"].ToString(); // CORREÇÃO: Preenche o nome do médico
+                        }
                     }
                 }
             }
         }
         return dto;
     }
-
     public static List<ProfissionalDTO> ListarProfissionaisPorEspecialidade(int codEspecialidade)
     {
         List<ProfissionalDTO> lista = new List<ProfissionalDTO>();
@@ -545,6 +685,63 @@ public class PreAgendamentoDAO
                             CodProfissional = Convert.ToInt32(dr["cod_profissional"]),
                             NomeProfissional = dr["nome_profissional"].ToString()
                         });
+                    }
+                }
+            }
+        }
+        return lista;
+    }
+    // =================================================================================
+    // LISTAR POR CLÍNICA (ESPECIALIDADE)
+    // =================================================================================
+    public static List<PreAgendamentoDTO> ListarPorClinica(int codEspecialidade)
+    {
+        var lista = new List<PreAgendamentoDTO>();
+
+        using (SqlConnection con = new SqlConnection(connStr))
+        {
+            string sql = @"
+                SELECT  
+                    p.id,
+                    p.data_preenchimento,
+                    p.cod_especialidade,
+                    e.nm_especialidade      AS clinica,
+                    p.cod_profissional,
+                    pr.nome_profissional    AS profissional
+                FROM dbo.PreAgendamento p
+                LEFT JOIN dbo.Especialidade e
+                       ON e.cod_especialidade = p.cod_especialidade
+                LEFT JOIN dbo.Profissional pr
+                       ON pr.cod_profissional = p.cod_profissional
+                WHERE p.status = 'A'
+                  AND p.cod_especialidade = @cod
+                ORDER BY p.id DESC;";
+
+            using (SqlCommand cmd = new SqlCommand(sql, con))
+            {
+                // Adiciona o parâmetro para filtrar
+                cmd.Parameters.AddWithValue("@cod", codEspecialidade);
+
+                con.Open();
+                using (SqlDataReader dr = cmd.ExecuteReader())
+                {
+                    while (dr.Read())
+                    {
+                        var dto = new PreAgendamentoDTO
+                        {
+                            Id = Convert.ToInt32(dr["id"]),
+                            DataPreenchimento = Convert.ToDateTime(dr["data_preenchimento"]),
+                            Clinica = dr["clinica"] == DBNull.Value ? null : dr["clinica"].ToString(),
+                            Profissional = dr["profissional"] == DBNull.Value ? null : dr["profissional"].ToString()
+                        };
+
+                        if (dr["cod_especialidade"] != DBNull.Value)
+                            dto.CodEspecialidade = Convert.ToInt32(dr["cod_especialidade"]);
+
+                        if (dr["cod_profissional"] != DBNull.Value)
+                            dto.CodProfissional = Convert.ToInt32(dr["cod_profissional"]);
+
+                        lista.Add(dto);
                     }
                 }
             }
