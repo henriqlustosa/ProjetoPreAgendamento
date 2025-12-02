@@ -8,11 +8,13 @@ using System.Web;
 /// </summary>
 public class BlocoDiaDTO
 {
-    public string diaSemana { get; set; }
-    public string horario { get; set; }
-    public string consultasNovas { get; set; }
-    public string consultasRetorno { get; set; }
-    public string NomeSubespecialidade { get; set; }
-    public int? CodSubespecialidade { get; set; } // NOVO
-    
+    public string DiaSemana { get; set; }
+    public string Horario { get; set; }
+    public string ConsultasNovas { get; set; }
+    public string ConsultasRetorno { get; set; }
+
+    // Usamos string ou int nullable para evitar erro se vier vazio ""
+    public string CodSubespecialidade { get; set; }
+    public string SubespecialidadeTexto { get; set; }
+
 }

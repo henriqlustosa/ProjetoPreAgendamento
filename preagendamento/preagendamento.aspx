@@ -3,181 +3,180 @@
     Title="Pré-Agendamento - Cadastro" %>
 
 <asp:Content ID="Content1" ContentPlaceHolderID="head" runat="Server">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+
     <style>
+        /* --- Estilos Gerais --- */
         body {
             background: #f8f9fa;
             font-family: 'Segoe UI', sans-serif;
-            font-size: 1rem;
         }
 
-        .preagendamento-container {
-            padding: 20px 0 40px;
-        }
-
+        /* Cards e Containers */
         .page-title-card {
-            border-radius: 8px 8px 0 0;
             background: #2A3F54;
             color: #fff;
-            padding: 16px 22px;
+            padding: 15px 20px;
+            border-radius: 8px 8px 0 0;
             font-weight: 600;
             font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
-        .card-block {
-            background: #ffffff;
+        .main-card {
+            background: #fff;
             border-radius: 0 0 8px 8px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.08);
-            padding: 22px 24px 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            padding: 25px;
+            margin-bottom: 40px;
         }
 
         .section-card {
-            background: #ffffff;
+            border: 1px solid #e9ecef;
             border-radius: 8px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.04);
-            padding: 18px 20px 12px;
-            margin-bottom: 18px;
+            margin-bottom: 25px;
+            overflow: hidden;
         }
 
         .section-header {
+            background: #f8f9fa;
+            padding: 12px 20px;
+            border-bottom: 1px solid #e9ecef;
+            border-left: 4px solid #2A3F54;
+            font-weight: 600;
+            color: #495057;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 12px;
-            border-bottom: 1px solid #e2e6ea;
-            padding-bottom: 6px;
         }
 
-        .section-title {
-            font-size: 1.15rem;
+        /* Formulários e Inputs */
+        .form-label {
             font-weight: 600;
-            color: #2A3F54;
-            margin: 0;
+            font-size: 0.85rem;
+            color: #6c757d;
+            margin-bottom: 4px;
+            display: block;
         }
 
-            .section-title i {
-                margin-right: 6px;
-            }
-
-        .form-group label {
-            font-size: .95rem;
-            font-weight: 600;
-            color: #495057;
-            margin-bottom: 2px;
-        }
-
-        .form-control, select.form-control {
+        .form-control, .form-select {
             border-radius: 6px;
-            font-size: .95rem;
-            padding: .45rem .6rem;
+            font-size: 0.95rem;
+            border: 1px solid #ced4da;
         }
 
             .form-control:focus {
-                box-shadow: 0 0 0 0.15rem rgba(42, 63, 84, .25);
                 border-color: #2A3F54;
+                box-shadow: 0 0 0 0.2rem rgba(42, 63, 84, 0.15);
             }
 
-        .small-help {
-            font-size: .8rem;
-            color: #868e96;
+        .required-asterisk {
+            color: #dc3545;
+            margin-left: 3px;
         }
 
-        .day-box {
-            border: 1px solid #dee2e6;
-            border-radius: 8px;
-            padding: 12px 12px 8px;
-            margin-bottom: 10px;
-            background: #fdfdff;
+        /* Área de Adição (Fundo Cinza) */
+        .add-area {
+            background-color: #f1f3f5;
+            padding: 20px;
+            border-bottom: 1px solid #dee2e6;
         }
 
-        .day-title {
+        /* Tabelas */
+        .custom-table {
+            width: 100%;
+            margin-bottom: 0;
+            font-size: 0.9rem;
+        }
+
+            .custom-table thead th {
+                background-color: #fff;
+                border-bottom: 2px solid #dee2e6;
+                color: #495057;
+                font-weight: 600;
+                text-transform: uppercase;
+                font-size: 0.75rem;
+                padding: 12px;
+            }
+
+            .custom-table tbody td {
+                vertical-align: middle;
+                padding: 10px 12px;
+                border-bottom: 1px solid #e9ecef;
+            }
+
+        .btn-action-icon {
+            color: #dc3545;
+            cursor: pointer;
+            background: none;
+            border: none;
+            padding: 5px;
+        }
+
+            .btn-action-icon:hover {
+                color: #a71d2a;
+                background-color: #ffe3e3;
+                border-radius: 4px;
+            }
+
+        /* Tags de Meses */
+        .mes-tag {
+            display: inline-flex;
+            align-items: center;
+            background-color: #e3f2fd;
+            color: #0d47a1;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
             font-weight: 600;
-            margin-bottom: 10px;
-            font-size: .95rem;
-            color: #2A3F54;
+            margin: 4px;
+            border: 1px solid #bbdefb;
         }
 
-        .btn-remove-day {
-            padding: 0.15rem .5rem;
-            font-size: .8rem;
+            .mes-tag .btn-remove {
+                margin-left: 8px;
+                cursor: pointer;
+                color: #1565c0;
+                font-size: 0.9rem;
+            }
+
+                .mes-tag .btn-remove:hover {
+                    color: #d32f2f;
+                }
+
+        /* Empty States */
+        .empty-state {
+            padding: 30px;
+            text-align: center;
+            color: #adb5bd;
+            font-style: italic;
         }
 
-        .bloqueios-header {
-            font-size: .95rem;
-            font-weight: 600;
-            margin-bottom: 6px;
+        /* Botões */
+        .btn-add-custom {
+            background-color: #2A3F54;
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            transition: all 0.2s;
         }
 
-        .btn-add-bloqueio, .btn-add-day, .btn-add-mes {
-            font-size: .9rem;
-            min-width: 180px;
-            padding: .25rem .75rem;
-        }
+            .btn-add-custom:hover {
+                background-color: #1a2633;
+                transform: translateY(-1px);
+            }
 
-        .section-header .btn-add-bloqueio, .section-header .btn-add-day, .section-header .btn-add-mes {
-            margin-left: 12px;
-        }
-
-        .actions-bar {
-            margin-top: 14px;
-            padding-top: 14px;
+        .footer-actions {
+            background: #fff;
+            padding-top: 20px;
             border-top: 1px solid #dee2e6;
             display: flex;
             justify-content: flex-end;
-            gap: 8px;
-        }
-
-        .preagendamento-container .btn-primary {
-            background-color: #2A3F54;
-            border-color: #2A3F54;
-        }
-
-            .preagendamento-container .btn-primary:hover {
-                background-color: #1f2f40;
-                border-color: #1f2f40;
-            }
-
-        .preagendamento-container .btn-outline-primary {
-            color: #2A3F54;
-            border-color: #2A3F54;
-        }
-
-            .preagendamento-container .btn-outline-primary:hover {
-                background-color: #2A3F54;
-                color: #fff;
-            }
-
-        .preagendamento-container .btn-outline-secondary {
-            color: #1ABB9C;
-            border-color: #1ABB9C;
-        }
-
-            .preagendamento-container .btn-outline-secondary:hover {
-                background-color: #1ABB9C;
-                color: #fff;
-            }
-
-        .preagendamento-container .is-invalid {
-            border-color: #dc3545 !important;
-            box-shadow: 0 0 0 0.15rem rgba(220, 53, 69, .25);
-        }
-
-        .preagendamento-container .campo-obrigatorio {
-            color: #dc3545;
-            font-size: 0.8rem;
-            margin-left: 4px;
-        }
-
-        .preagendamento-container .day-box.erro-bloco {
-            border-color: #dc3545;
-            box-shadow: 0 0 0 0.08rem rgba(220, 53, 69, .25);
-        }
-
-        .preagendamento-container .bloco-bloqueio.erro-bloco {
-            border: 1px solid #dc3545;
-            border-radius: 6px;
-            box-shadow: 0 0 0 0.08rem rgba(220, 53, 69, .25);
-            padding-top: 4px;
-            padding-bottom: 4px;
+            gap: 10px;
         }
     </style>
 </asp:Content>
@@ -185,90 +184,194 @@
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder2" runat="Server">
     <asp:ScriptManager ID="ScriptManager1" runat="server" EnablePageMethods="true" />
 
-    <div class="container-fluid preagendamento-container">
+    <div class="container py-4">
         <div class="row justify-content-center">
-            <div class="col-xl-10 col-lg-11">
+            <div class="col-xl-10">
 
                 <div class="page-title-card">
-                    <asp:Label ID="lblTituloPagina" runat="server" Text="HSPM Pré-Agendamento - Agendas Médicas"></asp:Label>
+                    <i class="fas fa-calendar-check"></i>
+                    <asp:Label ID="lblTituloPagina" runat="server" Text="Cadastro de Agenda Médica"></asp:Label>
                 </div>
 
-                <div class="card-block">
+                <div class="main-card">
+
                     <div class="section-card">
                         <div class="section-header">
-                            <div class="section-title"><i class="fas fa-user-md"></i>Dados Gerais</div>
+                            <span><i class="fas fa-user-md me-2"></i>Dados Gerais</span>
                         </div>
-                        <div class="form-row">
-                            <div class="form-group col-md-4">
-                                <label>Data de Preenchimento</label>
-                                <asp:TextBox ID="txtDataPreenchimento" CssClass="form-control" TextMode="SingleLine" runat="server" />
-                                <asp:HiddenField ID="hdnIdPreAgendamento" runat="server" />
-                            </div>
-                            <div class="form-group col-md-4">
-                                <label>Clínica <span class="campo-obrigatorio">*</span></label>
-                                <asp:DropDownList ID="ddlClinica" CssClass="form-control" runat="server" />
-                            </div>
-                            <div class="form-group col-md-4">
-                                <label>Nome do Profissional <span class="campo-obrigatorio">*</span></label>
-                                <select id="selProfissional" class="form-control">
-                                    <option value="">Selecione...</option>
-                                </select>
-                                <asp:HiddenField ID="hdnCodProfissional" runat="server" />
-                                <asp:HiddenField ID="hdnNomeProfissional" runat="server" />
+                        <div class="p-4">
+                            <div class="row g-3">
+                                <div class="col-md-2">
+                                    <span class="form-label">Data</span>
+                                    <asp:TextBox ID="txtDataPreenchimento" CssClass="form-control bg-light" ReadOnly="true" runat="server" />
+                                    <asp:HiddenField ID="hdnIdPreAgendamento" runat="server" />
+                                </div>
+                                <div class="col-md-5">
+                                    <span class="form-label">Clínica <span class="required-asterisk">*</span></span>
+                                    <asp:DropDownList ID="ddlClinica" CssClass="form-control form-select" runat="server" />
+                                </div>
+                                <div class="col-md-5">
+                                    <span class="form-label">Profissional <span class="required-asterisk">*</span></span>
+                                    <select id="selProfissional" class="form-control form-select">
+                                        <option value="">Selecione...</option>
+                                    </select>
+                                    <asp:HiddenField ID="hdnCodProfissional" runat="server" />
+                                    <asp:HiddenField ID="hdnNomeProfissional" runat="server" />
+                                </div>
                             </div>
                         </div>
                     </div>
 
                     <div class="section-card">
                         <div class="section-header">
-                            <div class="section-title"><i class="far fa-calendar-alt"></i>Meses para Pré-Agendamento</div>
-                            <button type="button" id="btnAdicionarMes" class="btn btn-outline-primary btn-sm btn-add-mes">
-                                <i class="fas fa-plus-circle"></i>Adicionar mês
-                            </button>
+                            <span><i class="far fa-calendar-alt me-2"></i>Meses da Agenda</span>
                         </div>
-                        <div class="form-row mb-2">
-                            <div class="form-group col-md-4">
-                                <label>Adicionar os meses para agenda: <span class="campo-obrigatorio">*</span></label>
-                                <select id="ddlMesesDisponiveis" class="form-control"></select>
+                        <div class="p-4">
+                            <div class="row align-items-end g-3 mb-3">
+                                <div class="col-md-5">
+                                    <span class="form-label">Selecionar mês para adicionar <span class="required-asterisk">*</span></span>
+                                    <select id="ddlMesesDisponiveis" class="form-control form-select"></select>
+                                </div>
+                                <div class="col-md-3">
+                                    <button type="button" id="btnAdicionarMes" class="btn btn-outline-primary w-100">
+                                        <i class="fas fa-plus me-1"></i>Adicionar Mês
+                                    </button>
+                                </div>
                             </div>
+                            <div id="containerMesesTags" class="p-3 bg-light rounded border border-light">
+                                <span class="text-muted small ms-2" id="lblNenhumMes">Nenhum mês selecionado.</span>
+                            </div>
+                            <asp:HiddenField ID="hdnMesesSelecionados" runat="server" />
                         </div>
-                        <div class="row" id="containerMesesSelecionados"></div>
-                        <asp:HiddenField ID="hdnMesesSelecionados" runat="server" />
                     </div>
 
                     <div class="section-card">
                         <div class="section-header">
-                            <div class="section-title"><i class="far fa-clock"></i>Horários por Dia da Semana</div>
-                            <button type="button" id="btnAddBloco" class="btn btn-outline-primary btn-sm btn-add-day">
-                                <i class="fas fa-plus-circle"></i>Adicionar dia
-                            </button>
+                            <span><i class="far fa-clock me-2"></i>Horários Semanais</span>
                         </div>
-                        <div id="blocosContainer" class="row"></div>
+
+                        <div class="add-area">
+                            <div class="row g-3 align-items-end">
+                                <div class="col-md-3">
+                                    <span class="form-label">Dia da Semana <span class="required-asterisk">*</span></span>
+                                    <select id="newDia" class="form-control form-select">
+                                        <option value="">Selecione...</option>
+                                        <option value="Segunda">Segunda-feira</option>
+                                        <option value="Terça">Terça-feira</option>
+                                        <option value="Quarta">Quarta-feira</option>
+                                        <option value="Quinta">Quinta-feira</option>
+                                        <option value="Sexta">Sexta-feira</option>
+                                        <option value="Sábado">Sábado</option>
+                                        <option value="Domingo">Domingo</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <span class="form-label">Horário <span class="required-asterisk">*</span></span>
+                                    <input type="time" id="newHora" class="form-control" />
+                                </div>
+                                <div class="col-md-2">
+                                    <span class="form-label">Novas</span>
+                                    <input type="number" id="newNovas" class="form-control" placeholder="0" min="0" />
+                                </div>
+                                <div class="col-md-2">
+                                    <span class="form-label">Retorno</span>
+                                    <input type="number" id="newRetorno" class="form-control" placeholder="0" min="0" />
+                                </div>
+                                <div class="col-md-3">
+                                    <button type="button" id="btnAddItemHorario" class="btn btn-add-custom w-100">
+                                        <i class="fas fa-plus-circle me-1"></i>Adicionar
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="row mt-3">
+                                <div class="col-md-6">
+                                    <span class="form-label">Subespecialidade <span class="required-asterisk">*</span></span>
+                                    <select id="newSub" class="form-control form-select">
+                                        <option value="">Selecione...</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="table custom-table table-hover" id="tblHorarios">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 20%;">Dia</th>
+                                        <th style="width: 15%;">Horário</th>
+                                        <th style="width: 25%;">Subespecialidade</th>
+                                        <th class="text-center" style="width: 15%;">Novas</th>
+                                        <th class="text-center" style="width: 15%;">Retorno</th>
+                                        <th class="text-end" style="width: 10%;">Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                            <div id="emptyHorarios" class="empty-state">
+                                Nenhum horário configurado. Utilize os campos acima para adicionar.
+                            </div>
+                        </div>
                         <asp:HiddenField ID="hdnBlocosJson" runat="server" />
                     </div>
 
                     <div class="section-card">
                         <div class="section-header">
-                            <div class="section-title"><i class="fas fa-info-circle"></i>Dados Complementares</div>
+                            <span><i class="fas fa-ban me-2"></i>Bloqueios / Ausências</span>
                         </div>
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <div class="bloqueios-header"><i class="fas fa-ban"></i>Bloqueios</div>
-                            <button type="button" id="btnAddBloqueio" class="btn btn-outline-secondary btn-sm btn-add-bloqueio">
-                                <i class="fas fa-plus-circle"></i>Adicionar bloqueio
-                            </button>
+
+                        <div class="add-area">
+                            <div class="row g-3 align-items-end">
+                                <div class="col-md-3">
+                                    <span class="form-label">De</span>
+                                    <input type="date" id="newBloqDe" class="form-control" />
+                                </div>
+                                <div class="col-md-3">
+                                    <span class="form-label">Até</span>
+                                    <input type="date" id="newBloqAte" class="form-control" />
+                                </div>
+                                <div class="col-md-4">
+                                    <span class="form-label">Motivo</span>
+                                    <select id="newBloqMotivo" class="form-control form-select">
+                                        <option value="">Selecione...</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <button type="button" id="btnAddItemBloqueio" class="btn btn-outline-danger w-100">
+                                        <i class="fas fa-lock me-1"></i>Bloquear
+                                    </button>
+                                </div>
+                            </div>
                         </div>
-                        <div id="bloqueiosContainer" class="mb-2"></div>
+
+                        <div class="table-responsive">
+                            <table class="table custom-table table-hover" id="tblBloqueios">
+                                <thead>
+                                    <tr>
+                                        <th>Data Início</th>
+                                        <th>Data Fim</th>
+                                        <th>Motivo</th>
+                                        <th class="text-end">Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                            <div id="emptyBloqueios" class="empty-state">
+                                Nenhum bloqueio cadastrado.
+                            </div>
+                        </div>
                         <asp:HiddenField ID="hdnBloqueiosJson" runat="server" />
-                        <div class="form-group mt-3">
-                            <label>Observações</label>
-                            <asp:TextBox ID="txtObservacoes" CssClass="form-control" TextMode="MultiLine" Rows="4" runat="server" />
-                        </div>
                     </div>
 
-                    <div class="actions-bar">
-                        <asp:Button ID="btnSalvar" CssClass="btn btn-primary" Text="Salvar" OnClick="btnSalvar_Click" OnClientClick="return PrepararBlocos();" runat="server" />
-                        <asp:Button ID="btnLimpar" CssClass="btn btn-secondary" Text="Limpar" OnClick="btnLimpar_Click" runat="server" />
+                    <div class="mb-3">
+                        <span class="form-label">Observações Gerais</span>
+                        <asp:TextBox ID="txtObservacoes" CssClass="form-control" TextMode="MultiLine" Rows="3" runat="server" />
                     </div>
+
+                    <div class="footer-actions">
+                        <asp:Button ID="btnLimpar" CssClass="btn btn-light border" Text="Limpar Formulário" OnClick="btnLimpar_Click" runat="server" />
+                        <asp:Button ID="btnSalvar" CssClass="btn btn-primary px-4" Text="Salvar Agenda" OnClick="btnSalvar_Click" OnClientClick="return ValidarAntesDeSalvar();" runat="server" />
+                    </div>
+
                 </div>
             </div>
         </div>
@@ -278,12 +381,11 @@
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header bg-danger text-white">
-                    <h5 class="modal-title"><i class="fas fa-exclamation-triangle me-2"></i>Erros de validação</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                    <h5 class="modal-title"><i class="fas fa-exclamation-circle me-2"></i>Atenção</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <p>Corrija os campos abaixo antes de salvar:</p>
-                    <ul id="listaErros" class="mb-0"></ul>
+                    <ul id="listaErros" class="mb-0 text-danger fw-bold"></ul>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
@@ -293,578 +395,450 @@
     </div>
 
     <script type="text/javascript">
-        // --- Variáveis Globais ---
-        var blocoIndex = 0;
-        var bloqueioIndex = 0;
-        var subespecialidadesCache = null;
-        var motivosBloqueioCache = null; // CACHE PARA OS MOTIVOS
-        var mesesSelecionados = new Map();
 
-        // ============================================================
-        // LÓGICA DE MESES
-        // ============================================================
-        function preencherDropdownMeses() {
-            var ddlMeses = document.getElementById('ddlMesesDisponiveis');
-            var txtData = document.getElementById('<%= txtDataPreenchimento.ClientID %>');
+        // --- ESTADO DA APLICAÇÃO ---
+        var listaMeses = new Map(); // Chave: '2025-01', Valor: 'Janeiro 2025'
+        var listaHorarios = [];     // Array de objetos
+        var listaBloqueios = [];    // Array de objetos
+        var cacheSubespecialidades = null;
+        var cacheMotivos = null;
 
-            ddlMeses.innerHTML = '';
-            ddlMeses.appendChild(new Option('Selecione...', ''));
-
-            var hoje = new Date();
-            if (txtData && txtData.value) {
-                var partes = txtData.value.split('-');
-                if (partes.length === 3) hoje = new Date(partes[0], partes[1] - 1, partes[2]);
-            }
-
-            var dataAtual = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 1);
-
-            for (var i = 0; i < 12; i++) {
-                var mes = dataAtual.getMonth() + 1;
-                var ano = dataAtual.getFullYear();
-                var mesStr = (mes < 10 ? '0' + mes : mes.toString());
-                var chave = ano + '-' + mesStr;
-                var label = dataAtual.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
-                label = label.charAt(0).toUpperCase() + label.slice(1);
-
-                ddlMeses.appendChild(new Option(label, chave));
-                dataAtual.setMonth(dataAtual.getMonth() + 1);
-            }
-        }
-
-        function atualizarHiddenFieldMeses() {
-            var hdn = document.getElementById('<%= hdnMesesSelecionados.ClientID %>');
-            hdn.value = Array.from(mesesSelecionados.keys()).join(',');
-        }
-
-        function criarCardMes(chave, label) {
-            var container = document.getElementById('containerMesesSelecionados');
-            if (container.querySelector('[data-mes="' + chave + '"]')) return;
-
-            var div = document.createElement('div');
-            div.className = 'col-md-3 col-sm-4 mb-3';
-            div.setAttribute('data-mes', chave);
-            div.innerHTML =
-                '<div class="card shadow-sm h-100">' +
-                '  <div class="card-body d-flex flex-column">' +
-                '    <div class="d-flex justify-content-between align-items-start mb-2">' +
-                '      <div>' +
-                '        <div class="fw-bold">' + label + '</div>' +
-                '        <small class="text-muted">Pré-agendamento</small>' +
-                '      </div>' +
-                '      <button type="button" class="btn btn-sm btn-link text-danger p-0 btn-remover-mes" title="Remover mês">' +
-                '        <i class="fas fa-times"></i>' +
-                '      </button>' +
-                '    </div>' +
-                '  </div>' +
-                '</div>';
-            container.appendChild(div);
-        }
-
-        // ============================================================
-        // AJAX E AUXILIARES
-        // ============================================================
-
-        function carregarMotivosBloqueio(callback) {
-            PageMethods.ListarMotivosBloqueio(
-                function (result) {
-                    motivosBloqueioCache = result;
-                    if (callback) callback();
-                },
-                function (e) { alert('Erro ao carregar motivos: ' + e.get_message()); }
-            );
-        }
-
-        function preencherSelectMotivos($select) {
-            $select.empty().append($('<option>').val('').text('Selecione...'));
-            if (motivosBloqueioCache) {
-                $.each(motivosBloqueioCache, function (i, item) {
-                    $select.append($('<option>').val(item.CodMotivo).text(item.NmMotivo));
-                });
-            }
-        }
-
-        function carregarProfissionaisPorClinica(codPreSelecionado = null) {
-            var ddlClinica = $('#<%= ddlClinica.ClientID %>');
-            var selProf = $('#selProfissional');
-            var codEsp = ddlClinica.val();
-
-            if (!codPreSelecionado) {
-                $('#<%= hdnCodProfissional.ClientID %>').val('');
-                $('#<%= hdnNomeProfissional.ClientID %>').val('');
-                selProf.empty().append($('<option/>', { value: '', text: 'Selecione...' }));
-            }
-
-            if (!codEsp) return;
-
-            PageMethods.ListarProfissionais(parseInt(codEsp),
-                function (result) {
-                    selProf.empty().append($('<option/>', { value: '', text: 'Selecione...' }));
-                    for (var i = 0; i < result.length; i++) {
-                        selProf.append($('<option/>', {
-                            value: result[i].CodProfissional,
-                            text: result[i].NomeProfissional
-                        }));
-                    }
-                    if (codPreSelecionado) {
-                        selProf.val(codPreSelecionado);
-                        if (!selProf.val()) {
-                            var nomeSalvo = $('#<%= hdnNomeProfissional.ClientID %>').val();
-                            selProf.append($('<option/>', { value: codPreSelecionado, text: nomeSalvo, selected: true }));
-                        }
-                    }
-                    var nomeSelecionado = selProf.find("option:selected").text();
-                    if (selProf.val()) $('#<%= hdnNomeProfissional.ClientID %>').val(nomeSelecionado);
-                },
-                function (err) { alert('Erro: ' + err.get_message()); }
-            );
-        }
-
-        function preencherSelectSubespecialidade($ddl, lista) {
-            $ddl.empty().append($('<option>').val('').text('Selecione...'));
-            $.each(lista, function (i, item) {
-                $ddl.append($('<option>').val(item.CodSubespecialidade).text(item.NomeSubespecialidade));
-            });
-        }
-
-        function carregarSubespecialidades(codEspec) {
-            if (!codEspec) {
-                $('.campoSubespecialidade').empty().append($('<option>').val('').text('Selecione...'));
-                subespecialidadesCache = null; return;
-            }
-            PageMethods.ListarSubespecialidades(parseInt(codEspec), function (lista) {
-                subespecialidadesCache = lista;
-                $('.campoSubespecialidade').each(function () {
-                    var $ddl = $(this);
-                    var valorParaSelecionar = $ddl.val() || $ddl.attr('data-selected');
-                    preencherSelectSubespecialidade($ddl, lista);
-                    if (valorParaSelecionar) $ddl.val(valorParaSelecionar);
-                });
-            }, function (e) { console.log(e); });
-        }
-
-        // ============================================================
-        // GERADORES DE HTML
-        // ============================================================
-        function criarBlocoHtml(index) {
-            return '<div class="col-md-4 bloco-dia-wrapper" data-index="' + index + '">' +
-                '  <div class="day-box bloco-dia">' +
-                '    <div class="day-title">Dia da Semana</div>' +
-                '    <label>Dia da Semana</label>' +
-                '    <select class="form-control campo-dia-semana">' +
-                '      <option value="">Selecione...</option>' +
-                '      <option value="Segunda">Segunda</option>' +
-                '      <option value="Terça">Terça</option>' +
-                '      <option value="Quarta">Quarta</option>' +
-                '      <option value="Quinta">Quinta</option>' +
-                '      <option value="Sexta">Sexta</option>' +
-                '    </select>' +
-                '    <label class="mt-2">Horário</label>' +
-                '    <input type="time" class="form-control campo-horario" />' +
-                '    <label class="mt-2">Consultas Novas</label>' +
-                '    <input type="text" class="form-control campo-consultas-novas" oninput="this.value = this.value.replace(/[^0-9]/g, \'\')" placeholder="0" />' +
-                '    <label class="mt-2">Consultas Retorno</label>' +
-                '    <input type="text" class="form-control campo-consultas-retorno" oninput="this.value = this.value.replace(/[^0-9]/g, \'\')" placeholder="0" />' +
-                '    <label class="mt-2">Subespecialidade</label>' +
-                '    <select class="form-control campoSubespecialidade">' +
-                '      <option value="">Selecione...</option>' +
-                '    </select>' +
-                '    <button type="button" class="btn btn-sm btn-outline-danger mt-2 btn-remover-bloco"><i class="fas fa-times"></i> Remover</button>' +
-                '  </div>' +
-                '</div>';
-        }
-
-        function adicionarBloco() {
-            var html = criarBlocoHtml(blocoIndex++);
-            $('#blocosContainer').append(html);
-            var $novoSelect = $('#blocosContainer .bloco-dia-wrapper').last().find('.campoSubespecialidade');
-            if (subespecialidadesCache && subespecialidadesCache.length > 0) {
-                preencherSelectSubespecialidade($novoSelect, subespecialidadesCache);
-            } else {
-                var codClinica = $('#<%= ddlClinica.ClientID %>').val();
-                if (codClinica && !subespecialidadesCache) carregarSubespecialidades(codClinica);
-            }
-        }
-
-        function criarBloqueioHtml(index) {
-            return '<div class="row bloco-bloqueio mb-2" data-index="' + index + '">' +
-                '  <div class="col-md-3"><label>De</label><input type="date" class="form-control campo-bloq-de" /></div>' +
-                '  <div class="col-md-3"><label>Até</label><input type="date" class="form-control campo-bloq-ate" /></div>' +
-                '  <div class="col-md-5"><label>Motivo</label><select class="form-control campo-bloq-motivo">' +
-                '      <option value="">Selecione...</option>' +
-                '  </select></div>' +
-                '  <div class="col-md-1 d-flex align-items-end"><button type="button" class="btn btn-sm btn-outline-danger btn-remover-bloqueio"><i class="fas fa-times"></i></button></div>' +
-                '</div>';
-        }
-
-        function adicionarBloqueio() {
-            var html = criarBloqueioHtml(bloqueioIndex++);
-            $('#bloqueiosContainer').append(html);
-            var $novo = $('#bloqueiosContainer .bloco-bloqueio').last();
-
-            var $selectMotivo = $novo.find('.campo-bloq-motivo');
-            preencherSelectMotivos($selectMotivo);
-
-            $novo.find('.campo-bloq-de, .campo-bloq-ate, .campo-bloq-motivo').on('blur change', function () {
-                var $campo = $(this);
-                if (!$campo.val()) {
-                    $campo.addClass('is-invalid');
-                    $novo.addClass('erro-bloco');
-                } else {
-                    $campo.removeClass('is-invalid');
-                    if ($novo.find('.is-invalid').length === 0) $novo.removeClass('erro-bloco');
-                }
-            });
-        }
-
-        // ============================================================
-        // VALIDAÇÃO E PREPARAÇÃO (SAVE)
-        // ============================================================
-        function limparErrosCamposObrigatorios() {
-            $('.is-invalid').removeClass('is-invalid');
-            $('.erro-bloco').removeClass('erro-bloco');
-        }
-
-        function exibirErrosModal(erros) {
-            var lista = document.getElementById('listaErros');
-            var modal = document.getElementById('errosModal');
-            if (!lista || !modal) { alert(erros.join('\n')); return; }
-            lista.innerHTML = '';
-            erros.forEach(function (msg) {
-                var li = document.createElement('li');
-                li.textContent = msg;
-                lista.appendChild(li);
-            });
-            var bsModal = new bootstrap.Modal(modal);
-            bsModal.show();
-        }
-
-        function validarDataNoPeriodo(dataStr) {
-            if (!dataStr || dataStr.length < 7) return false;
-            var chaveMes = dataStr.substring(0, 7);
-            return mesesSelecionados.has(chaveMes);
-        }
-
-        function PrepararBlocos() {
-            var erros = [];
-            var blocos = [];
-            var bloqueios = [];
-            var temBlocoValido = false;
-            var combinacoesBlocos = new Set();
-
-            limparErrosCamposObrigatorios();
-
-            var ddlClinica = $('#<%= ddlClinica.ClientID %>');
-            var hdnCodProf = $('#<%= hdnCodProfissional.ClientID %>');
-            var selProf = $('#selProfissional');
-            var hdnMeses = $('#<%= hdnMesesSelecionados.ClientID %>');
-            var ddlMesesDisp = $('#ddlMesesDisponiveis');
-
-            atualizarHiddenFieldMeses();
-            var mesesVal = hdnMeses.val();
-
-            if (!ddlClinica.val()) { erros.push('A Clínica é obrigatória.'); ddlClinica.addClass('is-invalid'); }
-            if (!hdnCodProf.val()) { erros.push('O Nome do Profissional é obrigatório.'); selProf.addClass('is-invalid'); }
-            if (!$('#<%= txtDataPreenchimento.ClientID %>').val()) { erros.push('Data de Preenchimento não informada.'); }
-            if (!mesesVal) { erros.push('Informe pelo menos um mês em "Meses para Pré-Agendamento".'); ddlMesesDisp.addClass('is-invalid'); }
-
-            // BLOCOS
-            var totalBlocosVisiveis = $('#blocosContainer .bloco-dia').length;
-            $('#blocosContainer .bloco-dia').each(function (idx) {
-                var $b = $(this);
-                var diaSemana = $b.find('.campo-dia-semana').val();
-                var horario = $b.find('.campo-horario').val();
-                var cNovas = $b.find('.campo-consultas-novas').val();
-                var cRetorno = $b.find('.campo-consultas-retorno').val();
-                var subId = $b.find('.campoSubespecialidade').val();
-                var subTexto = $b.find('.campoSubespecialidade option:selected').text();
-
-                var temNovas = (cNovas && cNovas.trim() !== "");
-                var temRetorno = (cRetorno && cRetorno.trim() !== "");
-
-                var prefixo = 'Bloco ' + (idx + 1) + ': ';
-                var valido = true;
-                var msgErroBloco = [];
-
-                if (!diaSemana) { msgErroBloco.push('Dia da Semana'); valido = false; $b.find('.campo-dia-semana').addClass('is-invalid'); }
-                if (!horario) { msgErroBloco.push('Horário'); valido = false; $b.find('.campo-horario').addClass('is-invalid'); }
-
-                if (!temNovas && !temRetorno) {
-                    msgErroBloco.push('Qtd. Consultas'); valido = false;
-                    $b.find('.campo-consultas-novas, .campo-consultas-retorno').addClass('is-invalid');
-                } else {
-                    $b.find('.campo-consultas-novas, .campo-consultas-retorno').removeClass('is-invalid');
-                }
-
-                if (!subId) { msgErroBloco.push('Subespecialidade'); valido = false; $b.find('.campoSubespecialidade').addClass('is-invalid'); }
-
-                if (!valido) {
-                    erros.push(prefixo + 'Preencha: ' + msgErroBloco.join(', ') + '.');
-                    $b.addClass('erro-bloco');
-                }
-
-                if (valido) {
-                    var chave = diaSemana + '|' + horario + '|' + subId;
-                    if (combinacoesBlocos.has(chave)) {
-                        erros.push(prefixo + 'Bloco duplicado (Dia, Horário e Subespecialidade iguais).');
-                        valido = false;
-                        $b.addClass('erro-bloco');
-                    } else {
-                        combinacoesBlocos.add(chave);
-                    }
-                }
-
-                if (valido) {
-                    temBlocoValido = true;
-                    blocos.push({
-                        DiaSemana: diaSemana,
-                        Horario: horario,
-                        ConsultasNovas: temNovas ? cNovas : "0",
-                        ConsultasRetorno: temRetorno ? cRetorno : "0",
-                        CodSubespecialidade: subId,
-                        SubespecialidadeTexto: subTexto
-                    });
-                }
-            });
-
-            if (totalBlocosVisiveis === 0) erros.push('Adicione pelo menos um Bloco de Horário.');
-            else if (!temBlocoValido && erros.length === 0) erros.push('Verifique os dados dos horários.');
-
-            // BLOQUEIOS
-            $('#bloqueiosContainer .bloco-bloqueio').each(function (idx) {
-                var $b = $(this);
-                var de = $b.find('.campo-bloq-de').val();
-                var ate = $b.find('.campo-bloq-ate').val();
-                var motivoId = $b.find('.campo-bloq-motivo').val();
-                var prefixo = 'Bloqueio ' + (idx + 1) + ': ';
-                var erroLinha = false;
-
-                if (!de) { erros.push(prefixo + 'falta data "De".'); erroLinha = true; $b.find('.campo-bloq-de').addClass('is-invalid'); }
-                if (!ate) { erros.push(prefixo + 'falta data "Até".'); erroLinha = true; $b.find('.campo-bloq-ate').addClass('is-invalid'); }
-                if (!motivoId) { erros.push(prefixo + 'falta "Motivo".'); erroLinha = true; $b.find('.campo-bloq-motivo').addClass('is-invalid'); }
-
-                if (!erroLinha && de && ate) {
-                    if (de > ate) {
-                        erros.push(prefixo + 'Data inicial maior que final.');
-                        erroLinha = true;
-                        $b.find('input[type=date]').addClass('is-invalid');
-                    }
-                    if (!validarDataNoPeriodo(de)) {
-                        erros.push(prefixo + 'Data Inicial fora dos meses selecionados.');
-                        erroLinha = true;
-                        $b.find('.campo-bloq-de').addClass('is-invalid');
-                    }
-                    if (!validarDataNoPeriodo(ate)) {
-                        erros.push(prefixo + 'Data Final fora dos meses selecionados.');
-                        erroLinha = true;
-                        $b.find('.campo-bloq-ate').addClass('is-invalid');
-                    }
-                }
-
-                if (!erroLinha && de && ate && motivoId) {
-                    bloqueios.push({ De: de, Ate: ate, CodMotivo: parseInt(motivoId) });
-                } else {
-                    $b.addClass('erro-bloco');
-                }
-            });
-
-            if (erros.length > 0) {
-                exibirErrosModal(erros);
-                return false;
-            }
-
-            $('#<%= hdnBlocosJson.ClientID %>').val(JSON.stringify(blocos));
-            $('#<%= hdnBloqueiosJson.ClientID %>').val(JSON.stringify(bloqueios));
-
-            return true;
-        }
-
-        // ============================================================
-        // CARREGAR DADOS EDIÇÃO (CORRIGIDO)
-        // ============================================================
-        function carregarDadosEdicao() {
-            var codClinica = $('#<%= ddlClinica.ClientID %>').val();
-            var codProf = $('#<%= hdnCodProfissional.ClientID %>').val();
-
-            if (codClinica && codProf) {
-                carregarProfissionaisPorClinica(codProf);
-                carregarSubespecialidades(codClinica);
-            }
-
-            // CARREGA BLOCOS
-            var jsonBlocos = $('#<%= hdnBlocosJson.ClientID %>').val();
-            if (jsonBlocos && jsonBlocos !== '[]' && jsonBlocos !== 'null') {
-                try {
-                    var blocos = JSON.parse(jsonBlocos);
-                    $('#blocosContainer').empty();
-                    blocoIndex = 0;
-
-                    blocos.forEach(function (b) {
-                        var html = criarBlocoHtml(blocoIndex);
-                        $('#blocosContainer').append(html);
-                        var $row = $('#blocosContainer .bloco-dia-wrapper').last();
-
-                        $row.find('.campo-dia-semana').val(b.DiaSemana || b.diaSemana);
-                        $row.find('.campo-horario').val(b.Horario || b.horario);
-                        $row.find('.campo-consultas-novas').val(b.ConsultasNovas || b.consultasNovas);
-                        $row.find('.campo-consultas-retorno').val(b.ConsultasRetorno || b.consultasRetorno);
-
-                        var codSub = b.CodSubespecialidade || b.codSubespecialidade;
-                        var txtSub = b.SubespecialidadeTexto || b.subespecialidadeTexto || "Selecionada";
-
-                        if (codSub) {
-                            var $ddl = $row.find('.campoSubespecialidade');
-                            $ddl.attr('data-selected', codSub);
-                            if (subespecialidadesCache) {
-                                preencherSelectSubespecialidade($ddl, subespecialidadesCache);
-                                $ddl.val(codSub);
-                            } else {
-                                $ddl.empty().append(new Option(txtSub, codSub, true, true));
-                            }
-                        }
-                        blocoIndex++;
-                    });
-                } catch (e) { console.error("Erro JSON Blocos", e); }
-            }
-
-            // CARREGA BLOQUEIOS (CORREÇÃO APLICADA AQUI)
-            var jsonBloqueios = $('#<%= hdnBloqueiosJson.ClientID %>').val();
-            if (jsonBloqueios && jsonBloqueios !== '[]' && jsonBloqueios !== 'null') {
-                try {
-                    var bloqueios = JSON.parse(jsonBloqueios);
-                    $('#bloqueiosContainer').empty();
-                    bloqueioIndex = 0;
-                    bloqueios.forEach(function (b) {
-                        var html = criarBloqueioHtml(bloqueioIndex);
-                        $('#bloqueiosContainer').append(html);
-                        var $row = $('#bloqueiosContainer .bloco-bloqueio').last();
-
-                        var de = b.De || b.de;
-                        var ate = b.Ate || b.ate;
-                        var codMotivo = b.CodMotivo || b.codMotivo;
-
-                        $row.find('.campo-bloq-de').val(de);
-                        $row.find('.campo-bloq-ate').val(ate);
-                        
-                        // CORREÇÃO: PREENCHE AS OPÇÕES ANTES DE SELECIONAR O VALOR
-                        var $ddlMotivo = $row.find('.campo-bloq-motivo');
-                        preencherSelectMotivos($ddlMotivo);
-                        
-                        // Agora seleciona o valor correto
-                        $ddlMotivo.val(codMotivo);
-                        
-                        bloqueioIndex++;
-                    });
-                } catch (e) { console.error("Erro JSON Bloqueios", e); }
-            }
-
-            // CARREGA MESES
-            var strMeses = $('#<%= hdnMesesSelecionados.ClientID %>').val();
-            if (strMeses) {
-                var arr = strMeses.split(',');
-                arr.forEach(function (chave) {
-                    if (chave && chave.indexOf('-') > 0) {
-                        var partes = chave.split('-');
-                        var ano = parseInt(partes[0]);
-                        var mes = parseInt(partes[1]);
-                        var d = new Date(ano, mes - 1, 1);
-                        var label = d.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
-                        label = label.charAt(0).toUpperCase() + label.slice(1);
-
-                        if (!mesesSelecionados.has(chave)) {
-                            mesesSelecionados.set(chave, label);
-                            criarCardMes(chave, label);
-                        }
-                    }
-                });
-                atualizarHiddenFieldMeses();
-            }
-        }
-
-        // ============================================================
-        // INICIALIZAÇÃO
-        // ============================================================
+        // --- INICIALIZAÇÃO ---
         $(function () {
-            preencherDropdownMeses();
+            // 1. Carregamentos Iniciais
+            CarregarDropdownMeses();
+            CarregarMotivosBackend();
 
-            var idEdicao = $('#<%= hdnIdPreAgendamento.ClientID %>').val();
-
-            // 1. Carrega os Motivos do Backend PRIMEIRO
-            carregarMotivosBloqueio(function() {
-                // 2. Só DEPOIS verifica se é edição (para garantir que os dropdowns possam ser populados)
-                if (idEdicao) {
-                    carregarDadosEdicao();
-                } else {
-                    adicionarBloco();
-                }
-            });
-
-            $('#btnAddBloco').click(adicionarBloco);
-            $('#btnAddBloqueio').click(adicionarBloqueio);
-
-            $('#btnAdicionarMes').click(function () {
-                var ddl = document.getElementById('ddlMesesDisponiveis');
-                var $ddl = $(ddl);
-                var chave = ddl.value;
-
-                if (!chave) { alert('Selecione um mês.'); return; }
-                if (mesesSelecionados.has(chave)) { alert('Mês já adicionado.'); return; }
-
-                var label = ddl.options[ddl.selectedIndex].text;
-                mesesSelecionados.set(chave, label);
-                criarCardMes(chave, label);
-                atualizarHiddenFieldMeses();
-                $ddl.removeClass('is-invalid');
-            });
-
-            $('#containerMesesSelecionados').on('click', '.btn-remover-mes', function () {
-                var div = $(this).closest('[data-mes]');
-                var chave = div.attr('data-mes');
-                mesesSelecionados.delete(chave);
-                div.remove();
-                atualizarHiddenFieldMeses();
-            });
-
-            $('#bloqueiosContainer').on('click', '.btn-remover-bloqueio', function () {
-                $(this).closest('.bloco-bloqueio').remove();
-            });
-
-            $('#blocosContainer').on('click', '.btn-remover-bloco', function () {
-                $(this).closest('.bloco-dia-wrapper').remove();
-            });
-
-            $('#blocosContainer').on('input', '.campo-consultas-novas, .campo-consultas-retorno', function () {
-                var $wrapper = $(this).closest('.bloco-dia');
-                var $novas = $wrapper.find('.campo-consultas-novas');
-                var $retorno = $wrapper.find('.campo-consultas-retorno');
-
-                if ($novas.val() || $retorno.val()) {
-                    $novas.removeClass('is-invalid');
-                    $retorno.removeClass('is-invalid');
-                    if ($wrapper.find('.is-invalid').length === 0) {
-                        $wrapper.removeClass('erro-bloco');
-                    }
-                }
-            });
-
-            $('body').on('change input', '.is-invalid', function () {
-                $(this).removeClass('is-invalid');
-                $(this).closest('.erro-bloco').removeClass('erro-bloco');
-            });
-
+            // 2. Eventos de Change
             $('#<%= ddlClinica.ClientID %>').change(function () {
                 var cod = $(this).val();
-                carregarSubespecialidades(cod);
-                carregarProfissionaisPorClinica();
-                if (cod) $(this).removeClass('is-invalid');
+                CarregarProfissionais(cod);
+                CarregarSubespecialidades(cod);
+                $('#newSub').val(''); // Limpa subespecialidade ao trocar clínica
             });
 
             $('#selProfissional').change(function () {
-                var cod = $(this).val();
-                var nome = $(this).find("option:selected").text();
-                $('#<%= hdnCodProfissional.ClientID %>').val(cod);
-                $('#<%= hdnNomeProfissional.ClientID %>').val(nome);
-                if (cod) $(this).removeClass('is-invalid');
+                $('#<%= hdnCodProfissional.ClientID %>').val($(this).val());
+                $('#<%= hdnNomeProfissional.ClientID %>').val($(this).find("option:selected").text());
             });
+
+            // 3. Eventos de Adição (Botões)
+            $('#btnAdicionarMes').click(AdicionarMes);
+            $('#btnAddItemHorario').click(AdicionarHorarioLista);
+            $('#btnAddItemBloqueio').click(AdicionarBloqueioLista);
+
+            // 4. Checar Edição (Carrega dados se existir ID)
+            var idEdicao = $('#<%= hdnIdPreAgendamento.ClientID %>').val();
+            if (idEdicao) {
+                // Pequeno delay para garantir que PageMethods estejam prontos
+                setTimeout(CarregarDadosEdicao, 500);
+            }
         });
+
+
+        // =========================================================
+        // LÓGICA DE MESES (TAGS)
+        // =========================================================
+        function CarregarDropdownMeses() {
+            var ddl = $('#ddlMesesDisponiveis');
+            ddl.empty().append(new Option('Selecione...', ''));
+
+            var hoje = new Date();
+            var dataCursor = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 1);
+
+            for (var i = 0; i < 12; i++) {
+                var mes = dataCursor.getMonth() + 1;
+                var ano = dataCursor.getFullYear();
+                var chave = ano + '-' + (mes < 10 ? '0' + mes : mes);
+                var label = dataCursor.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+                label = label.charAt(0).toUpperCase() + label.slice(1); // Capitaliza
+
+                ddl.append(new Option(label, chave));
+                dataCursor.setMonth(dataCursor.getMonth() + 1);
+            }
+        }
+
+        function AdicionarMes() {
+            var ddl = $('#ddlMesesDisponiveis');
+            var chave = ddl.val();
+            var label = ddl.find('option:selected').text();
+
+            if (!chave) return;
+            if (listaMeses.has(chave)) { alert('Este mês já foi adicionado.'); return; }
+
+            listaMeses.set(chave, label);
+            RenderizarMeses();
+            ddl.val('');
+        }
+
+        function RenderizarMeses() {
+            var container = $('#containerMesesTags');
+            var hdn = $('#<%= hdnMesesSelecionados.ClientID %>');
+            container.empty();
+
+            if (listaMeses.size === 0) {
+                container.append('<span class="text-muted small ms-2" id="lblNenhumMes">Nenhum mês selecionado.</span>');
+                hdn.val('');
+                return;
+            }
+
+            listaMeses.forEach(function (label, chave) {
+                var tag = $('<div class="mes-tag">' + label + ' <i class="fas fa-times btn-remove" title="Remover"></i></div>');
+                tag.find('.btn-remove').click(function () {
+                    listaMeses.delete(chave);
+                    RenderizarMeses();
+                });
+                container.append(tag);
+            });
+
+            // Atualiza Hidden Field para o Server (Formato: 2026-01,2026-02)
+            hdn.val(Array.from(listaMeses.keys()).join(','));
+        }
+
+        // =========================================================
+        // LÓGICA DE HORÁRIOS (TABELA)
+        // =========================================================
+        function AdicionarHorarioLista() {
+            // Ler Inputs
+            var dia = $('#newDia').val();
+            var hora = $('#newHora').val();
+            var novas = $('#newNovas').val();
+            var retorno = $('#newRetorno').val();
+            var subId = $('#newSub').val();
+            var subTxt = subId ? $('#newSub option:selected').text() : "";
+
+            // Validação Obrigatória (Dia, Hora e Subespecialidade)
+            if (!dia || !hora || !subId) {
+                alert('Preencha Dia, Horário e selecione a Subespecialidade.');
+                return;
+            }
+
+            if ((!novas || novas == "0") && (!retorno || retorno == "0")) {
+                alert('Informe ao menos uma quantidade de consultas (Novas ou Retorno).'); return;
+            }
+
+            // Objeto
+            var item = {
+                DiaSemana: dia,
+                Horario: hora,
+                ConsultasNovas: novas || "0",
+                ConsultasRetorno: retorno || "0",
+                CodSubespecialidade: subId,
+                SubespecialidadeTexto: subTxt
+            };
+
+            // Adicionar e Limpar
+            listaHorarios.push(item);
+            RenderizarTabelaHorarios();
+
+            // Limpar campos
+            $('#newDia').val('').focus();
+            $('#newNovas').val('');
+            $('#newRetorno').val('');
+            $('#newHora').val('');
+            // Nota: Não limpamos Subespecialidade por conveniência do usuário
+        }
+
+        function RenderizarTabelaHorarios() {
+            var tbody = $('#tblHorarios tbody');
+            tbody.empty();
+
+            if (listaHorarios.length === 0) {
+                $('#emptyHorarios').show();
+                $('#tblHorarios').hide();
+                $('#<%= hdnBlocosJson.ClientID %>').val('');
+                return;
+            }
+
+            $('#emptyHorarios').hide();
+            $('#tblHorarios').show();
+
+            listaHorarios.forEach(function (item, index) {
+                var tr = $('<tr>');
+                tr.append('<td><strong>' + item.DiaSemana + '</strong></td>');
+                tr.append('<td>' + item.Horario + '</td>');
+                tr.append('<td>' + item.SubespecialidadeTexto + '</td>');
+
+                var badgeNovas = item.ConsultasNovas > 0 ? '<span class="badge bg-primary rounded-pill">' + item.ConsultasNovas + '</span>' : '-';
+                var badgeRetorno = item.ConsultasRetorno > 0 ? '<span class="badge bg-info text-dark rounded-pill">' + item.ConsultasRetorno + '</span>' : '-';
+
+                tr.append('<td class="text-center">' + badgeNovas + '</td>');
+                tr.append('<td class="text-center">' + badgeRetorno + '</td>');
+
+                var tdAcoes = $('<td class="text-end"></td>');
+                var btnDel = $('<button type="button" class="btn-action-icon"><i class="fas fa-trash-alt"></i></button>');
+                btnDel.click(function () {
+                    listaHorarios.splice(index, 1);
+                    RenderizarTabelaHorarios();
+                });
+                tdAcoes.append(btnDel);
+                tr.append(tdAcoes);
+
+                tbody.append(tr);
+            });
+
+            $('#<%= hdnBlocosJson.ClientID %>').val(JSON.stringify(listaHorarios));
+        }
+
+        // =========================================================
+        // LÓGICA DE BLOQUEIOS (TABELA)
+        // =========================================================
+        function CarregarMotivosBackend() {
+            PageMethods.ListarMotivosBloqueio(function (res) {
+                cacheMotivos = res;
+                var ddl = $('#newBloqMotivo');
+                ddl.empty().append(new Option('Selecione...', ''));
+                $.each(res, function (i, m) {
+                    ddl.append(new Option(m.NmMotivo, m.CodMotivo));
+                });
+            });
+        }
+
+        // Função de Validação de Datas do Bloqueio
+        function validarDataNoPeriodo(dataIso) {
+            if (!dataIso || dataIso.length < 7) return false;
+
+            // Pega "yyyy-mm"
+            var anoMes = dataIso.substring(0, 7);
+
+            // Verifica no Map visual
+            if (listaMeses.size > 0) return listaMeses.has(anoMes);
+
+            // Fallback: Verifica no HiddenField
+            var hdnValor = $('[id$=hdnMesesSelecionados]').val();
+            if (hdnValor) {
+                var arrayMeses = hdnValor.split(',');
+                return arrayMeses.indexOf(anoMes) > -1;
+            }
+            return false;
+        }
+
+        function AdicionarBloqueioLista() {
+            var de = $('#newBloqDe').val();
+            var ate = $('#newBloqAte').val();
+            var motivoId = $('#newBloqMotivo').val();
+            var motivoTxt = $('#newBloqMotivo option:selected').text();
+
+            // 1. Validação Básica
+            if (!de || !ate || !motivoId) {
+                alert('Preencha as datas De/Até e o Motivo.');
+                return;
+            }
+
+            // 2. Validação Lógica (Início > Fim)
+            if (de > ate) {
+                alert('A data inicial não pode ser maior que a final.');
+                // Limpa os campos para o usuário corrigir
+                $('#newBloqDe').val('');
+                $('#newBloqAte').val('');
+                $('#newBloqMotivo').val('');
+
+                return; // Sai da função aqui
+            }
+
+            // 3. VALIDAÇÃO: Verifica se as datas pertencem aos meses selecionados
+            var fmtData = function (d) { return d.split('-').reverse().join('/'); };
+
+            if (!validarDataNoPeriodo(de)) {
+                alert('A data INICIAL (' + fmtData(de) + ') não pertence aos meses selecionados na agenda.');
+
+                // --- AQUI É O LUGAR CORRETO PARA LIMPAR ---
+                $('#newBloqDe').val('');
+                $('#newBloqAte').val('');
+                $('#newBloqMotivo').val('');
+
+                // ------------------------------------------
+
+                return; // Sai da função
+            }
+
+            if (!validarDataNoPeriodo(ate)) {
+                alert('A data FINAL (' + fmtData(ate) + ') não pertence aos meses selecionados na agenda.');
+
+                // --- AQUI É O LUGAR CORRETO PARA LIMPAR ---
+                $('#newBloqDe').val('');
+                $('#newBloqAte').val('');
+                $('#newBloqMotivo').val('');
+
+                // ------------------------------------------
+
+                return; // Sai da função
+            }
+
+            // Se passou por tudo, adiciona na lista
+            var item = {
+                De: de,
+                Ate: ate,
+                CodMotivo: motivoId,
+                MotivoTexto: motivoTxt
+            };
+
+            listaBloqueios.push(item);
+            RenderizarTabelaBloqueios();
+
+            // Limpar campos APÓS adicionar com sucesso (para nova inserção)
+            $('#newBloqDe').val('');
+            $('#newBloqAte').val('');
+            $('#newBloqMotivo').val('');
+        }
+
+        function RenderizarTabelaBloqueios() {
+            var tbody = $('#tblBloqueios tbody');
+            tbody.empty();
+
+            if (listaBloqueios.length === 0) {
+                $('#emptyBloqueios').show();
+                $('#tblBloqueios').hide();
+                $('#<%= hdnBloqueiosJson.ClientID %>').val('');
+                return;
+            }
+
+            $('#emptyBloqueios').hide();
+            $('#tblBloqueios').show();
+
+            listaBloqueios.forEach(function (item, index) {
+                var fmtData = function (d) { return d.split('-').reverse().join('/'); };
+
+                var tr = $('<tr>');
+                tr.append('<td>' + fmtData(item.De) + '</td>');
+                tr.append('<td>' + fmtData(item.Ate) + '</td>');
+                tr.append('<td>' + item.MotivoTexto + '</td>');
+
+                var tdAcoes = $('<td class="text-end"></td>');
+                var btnDel = $('<button type="button" class="btn-action-icon"><i class="fas fa-trash-alt"></i></button>');
+                btnDel.click(function () {
+                    listaBloqueios.splice(index, 1);
+                    RenderizarTabelaBloqueios();
+                });
+                tdAcoes.append(btnDel);
+                tr.append(tdAcoes);
+
+                tbody.append(tr);
+            });
+
+            $('#<%= hdnBloqueiosJson.ClientID %>').val(JSON.stringify(listaBloqueios));
+        }
+
+        // =========================================================
+        // AJAX AUXILIARES
+        // =========================================================
+        function CarregarProfissionais(codClinica) {
+            var sel = $('#selProfissional');
+            sel.empty().append(new Option('Carregando...', ''));
+
+            if (!codClinica) { sel.empty().append(new Option('Selecione...', '')); return; }
+
+            PageMethods.ListarProfissionais(parseInt(codClinica), function (res) {
+                sel.empty().append(new Option('Selecione...', ''));
+                $.each(res, function (i, p) {
+                    sel.append(new Option(p.NomeProfissional, p.CodProfissional));
+                });
+                // Restaurar valor se for edição
+                var salvo = $('#<%= hdnCodProfissional.ClientID %>').val();
+                if (salvo) sel.val(salvo);
+            });
+        }
+
+        function CarregarSubespecialidades(codClinica) {
+            var sel = $('#newSub');
+            sel.empty().append(new Option('Carregando...', ''));
+
+            if (!codClinica) {
+                sel.empty().append(new Option('Selecione...', ''));
+                return;
+            }
+
+            PageMethods.ListarSubespecialidades(parseInt(codClinica), function (res) {
+                cacheSubespecialidades = res;
+                sel.empty().append(new Option('Selecione...', ''));
+                $.each(res, function (i, s) {
+                    sel.append(new Option(s.NomeSubespecialidade, s.CodSubespecialidade));
+                });
+            });
+        }
+
+        // =========================================================
+        // VALIDAÇÃO FINAL (SAVE)
+        // =========================================================
+        function ValidarAntesDeSalvar() {
+            var erros = [];
+
+            if (!$('#<%= ddlClinica.ClientID %>').val()) erros.push('Selecione a Clínica.');
+            if (!$('#<%= hdnCodProfissional.ClientID %>').val()) erros.push('Selecione o Profissional.');
+            if (listaMeses.size === 0) erros.push('Adicione pelo menos um mês à agenda.');
+            if (listaHorarios.length === 0) erros.push('Adicione pelo menos um horário de atendimento.');
+
+            if (erros.length > 0) {
+                var ul = $('#listaErros');
+                ul.empty();
+                erros.forEach(function (e) { ul.append('<li>' + e + '</li>'); });
+                var modal = new bootstrap.Modal(document.getElementById('errosModal'));
+                modal.show();
+                return false;
+            }
+            return true;
+        }
+
+        // =========================================================
+        // CARREGAR EDIÇÃO
+        // =========================================================
+        function CarregarDadosEdicao() {
+            // 1. Trigger mudança de clínica
+            var codClinica = $('#<%= ddlClinica.ClientID %>').val();
+            if (codClinica) {
+                CarregarProfissionais(codClinica);
+                CarregarSubespecialidades(codClinica);
+            }
+
+            // 2. Meses (COM CORREÇÃO VISUAL PARA NOME POR EXTENSO)
+            var strMeses = $('#<%= hdnMesesSelecionados.ClientID %>').val();
+            if (strMeses) {
+                listaMeses.clear();
+                strMeses.split(',').forEach(function (m) {
+                    m = m.trim();
+                    if (m && m.indexOf('-') > -1) {
+                        // Converte "2026-01" para "Janeiro de 2026"
+                        var partes = m.split('-');
+                        var ano = parseInt(partes[0]);
+                        var mes = parseInt(partes[1]);
+                        var dataObj = new Date(ano, mes - 1, 1);
+                        var label = dataObj.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+                        label = label.charAt(0).toUpperCase() + label.slice(1);
+                        listaMeses.set(m, label);
+                    }
+                });
+                RenderizarMeses();
+            }
+
+            // 3. Horarios
+            var jsonH = $('#<%= hdnBlocosJson.ClientID %>').val();
+            if (jsonH) {
+                listaHorarios = JSON.parse(jsonH);
+                RenderizarTabelaHorarios();
+            }
+
+            // 4. Bloqueios (COM CORREÇÃO PARA MOTIVO NULL)
+            var jsonB = $('#<%= hdnBloqueiosJson.ClientID %>').val();
+            if (jsonB) {
+                listaBloqueios = JSON.parse(jsonB);
+
+                // Fallback caso o Texto venha nulo
+                if (cacheMotivos && listaBloqueios.length > 0) {
+                    for (var i = 0; i < listaBloqueios.length; i++) {
+                        var item = listaBloqueios[i];
+                        if (!item.MotivoTexto || item.MotivoTexto === 'null') {
+                            for (var j = 0; j < cacheMotivos.length; j++) {
+                                if (cacheMotivos[j].CodMotivo == item.CodMotivo) {
+                                    item.MotivoTexto = cacheMotivos[j].NmMotivo;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+                RenderizarTabelaBloqueios();
+            }
+        }
+
     </script>
 </asp:Content>

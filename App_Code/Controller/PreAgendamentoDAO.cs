@@ -166,19 +166,27 @@ public class PreAgendamentoDAO
                         using (SqlCommand cmd = new SqlCommand(sqlDia, con, tran))
                         {
                             cmd.Parameters.AddWithValue("@id", novoId);
-                            cmd.Parameters.AddWithValue("@dia", b.diaSemana);
-                            cmd.Parameters.AddWithValue("@hor", b.horario ?? (object)DBNull.Value);
+                            cmd.Parameters.AddWithValue("@dia", b.DiaSemana);
+                            cmd.Parameters.AddWithValue("@hor", b.Horario ?? (object)DBNull.Value);
 
                             int qNov = 0, qRet = 0;
-                            int.TryParse(b.consultasNovas, out qNov);
-                            int.TryParse(b.consultasRetorno, out qRet);
+                            int.TryParse(b.ConsultasNovas, out qNov);
+                            int.TryParse(b.ConsultasRetorno, out qRet);
                             cmd.Parameters.AddWithValue("@nov", qNov);
                             cmd.Parameters.AddWithValue("@ret", qRet);
+                            // Declara a variável para receber o valor convertido
+                            int idSub;
 
-                            if (b.CodSubespecialidade.HasValue && b.CodSubespecialidade.Value > 0)
-                                cmd.Parameters.AddWithValue("@sub", b.CodSubespecialidade.Value);
+                            // Tenta converter a string para inteiro. Se der certo E for maior que 0, usa o valor.
+                            if (int.TryParse(b.CodSubespecialidade, out idSub) && idSub > 0)
+                            {
+                                cmd.Parameters.AddWithValue("@sub", idSub);
+                            }
                             else
+                            {
+                                // Caso contrário (se for vazio, nulo ou "0"), grava NULL no banco
                                 cmd.Parameters.AddWithValue("@sub", DBNull.Value);
+                            }
 
                             cmd.ExecuteNonQuery();
                         }
@@ -201,15 +209,15 @@ public class PreAgendamentoDAO
                             cmd.Parameters.AddWithValue("@id", novoId);
 
                             DateTime dtDe, dtAte;
-                            if (!DateTime.TryParse(bl.de, out dtDe)) dtDe = DateTime.Now;
-                            if (!DateTime.TryParse(bl.ate, out dtAte)) dtAte = DateTime.Now;
+                            if (!DateTime.TryParse(bl.De, out dtDe)) dtDe = DateTime.Now;
+                            if (!DateTime.TryParse(bl.Ate, out dtAte)) dtAte = DateTime.Now;
 
                             cmd.Parameters.AddWithValue("@de", dtDe);
                             cmd.Parameters.AddWithValue("@ate", dtAte);
 
                             // Grava o ID do motivo
-                            if (bl.codMotivo > 0)
-                                cmd.Parameters.AddWithValue("@cod_motivo", bl.codMotivo);
+                            if (bl.CodMotivo > 0)
+                                cmd.Parameters.AddWithValue("@cod_motivo", bl.CodMotivo);
                             else
                                 cmd.Parameters.AddWithValue("@cod_motivo", DBNull.Value);
 
@@ -297,19 +305,28 @@ public class PreAgendamentoDAO
                         using (SqlCommand cmd = new SqlCommand(sqlInsDia, con, tran))
                         {
                             cmd.Parameters.AddWithValue("@id", dto.Id);
-                            cmd.Parameters.AddWithValue("@dia", b.diaSemana);
-                            cmd.Parameters.AddWithValue("@hor", b.horario ?? (object)DBNull.Value);
+                            cmd.Parameters.AddWithValue("@dia", b.DiaSemana);
+                            cmd.Parameters.AddWithValue("@hor", b.Horario ?? (object)DBNull.Value);
 
                             int qNov = 0, qRet = 0;
-                            int.TryParse(b.consultasNovas, out qNov);
-                            int.TryParse(b.consultasRetorno, out qRet);
+                            int.TryParse(b.ConsultasNovas, out qNov);
+                            int.TryParse(b.ConsultasRetorno, out qRet);
                             cmd.Parameters.AddWithValue("@nov", qNov);
                             cmd.Parameters.AddWithValue("@ret", qRet);
 
-                            if (b.CodSubespecialidade.HasValue && b.CodSubespecialidade.Value > 0)
-                                cmd.Parameters.AddWithValue("@sub", b.CodSubespecialidade.Value);
+                            // Declara a variável para receber o valor convertido
+                            int idSub;
+
+                            // Tenta converter a string para inteiro. Se der certo E for maior que 0, usa o valor.
+                            if (int.TryParse(b.CodSubespecialidade, out idSub) && idSub > 0)
+                            {
+                                cmd.Parameters.AddWithValue("@sub", idSub);
+                            }
                             else
+                            {
+                                // Caso contrário (se for vazio, nulo ou "0"), grava NULL no banco
                                 cmd.Parameters.AddWithValue("@sub", DBNull.Value);
+                            }
 
                             cmd.ExecuteNonQuery();
                         }
@@ -342,14 +359,14 @@ public class PreAgendamentoDAO
                             cmd.Parameters.AddWithValue("@id", dto.Id);
 
                             DateTime d1, d2;
-                            DateTime.TryParse(bl.de, out d1);
-                            DateTime.TryParse(bl.ate, out d2);
+                            DateTime.TryParse(bl.De, out d1);
+                            DateTime.TryParse(bl.Ate, out d2);
 
                             cmd.Parameters.AddWithValue("@de", d1);
                             cmd.Parameters.AddWithValue("@ate", d2);
 
-                            if (bl.codMotivo > 0)
-                                cmd.Parameters.AddWithValue("@cod_motivo", bl.codMotivo);
+                            if (bl.CodMotivo > 0)
+                                cmd.Parameters.AddWithValue("@cod_motivo", bl.CodMotivo);
                             else
                                 cmd.Parameters.AddWithValue("@cod_motivo", DBNull.Value);
 
@@ -480,15 +497,15 @@ public class PreAgendamentoDAO
                     while (dr.Read())
                     {
                         var b = new BlocoDiaDTO();
-                        b.diaSemana = dr["dia_semana"].ToString();
-                        b.horario = dr["horario"].ToString();
-                        b.consultasNovas = dr["consultas_novas"].ToString();
-                        b.consultasRetorno = dr["consultas_retorno"].ToString();
+                        b.DiaSemana = dr["dia_semana"].ToString();
+                        b.Horario = dr["horario"].ToString();
+                        b.ConsultasNovas = dr["consultas_novas"].ToString();
+                        b.ConsultasRetorno = dr["consultas_retorno"].ToString();
 
                         if (dr["cod_subespecialidade"] != DBNull.Value)
                         {
-                            b.CodSubespecialidade = Convert.ToInt32(dr["cod_subespecialidade"]);
-                            b.NomeSubespecialidade = dr["nm_subespecialidade"].ToString();
+                            b.CodSubespecialidade = dr["cod_subespecialidade"].ToString();
+                            b.SubespecialidadeTexto = dr["nm_subespecialidade"].ToString();
                         }
                         lista.Add(b);
                     }
@@ -499,19 +516,24 @@ public class PreAgendamentoDAO
     }
 
     // =================================================================================
-    // LEITURA DE BLOQUEIOS - ATUALIZADO PARA cod_motivo
+    // LEITURA DE BLOQUEIOS - COM JOIN PARA PREENCHER MotivoTexto
     // =================================================================================
     public static List<BloqueioDTO> ListarBloqueios(int idPre)
     {
         var lista = new List<BloqueioDTO>();
         using (SqlConnection con = new SqlConnection(connStr))
         {
-            // Seleciona o cod_motivo em vez da string motivo
+            // Query alterada: Alias 'B' para Bloqueio e 'M' para Motivo
             string sql = @"
-                SELECT data_de, data_ate, cod_motivo
-                FROM dbo.PreAgendamentoBloqueio
-                WHERE id_preagendamento = @id 
-                  AND status = 'A'";
+            SELECT 
+                B.data_de, 
+                B.data_ate, 
+                B.cod_motivo,
+                M.nm_motivo
+            FROM dbo.PreAgendamentoBloqueio B
+            LEFT JOIN dbo.PreAgendamentoMotivo M ON B.cod_motivo = M.cod_motivo
+            WHERE B.id_preagendamento = @id 
+              AND B.status = 'A'";
 
             using (SqlCommand cmd = new SqlCommand(sql, con))
             {
@@ -522,12 +544,23 @@ public class PreAgendamentoDAO
                     while (dr.Read())
                     {
                         var b = new BloqueioDTO();
-                        if (dr["data_de"] != DBNull.Value) b.de = Convert.ToDateTime(dr["data_de"]).ToString("yyyy-MM-dd");
-                        if (dr["data_ate"] != DBNull.Value) b.ate = Convert.ToDateTime(dr["data_ate"]).ToString("yyyy-MM-dd");
 
-                        // Lê o ID do motivo para o DTO
+                        // Datas
+                        if (dr["data_de"] != DBNull.Value)
+                            b.De = Convert.ToDateTime(dr["data_de"]).ToString("yyyy-MM-dd");
+
+                        if (dr["data_ate"] != DBNull.Value)
+                            b.Ate = Convert.ToDateTime(dr["data_ate"]).ToString("yyyy-MM-dd");
+
+                        // ID do Motivo
                         if (dr["cod_motivo"] != DBNull.Value)
-                            b.codMotivo = Convert.ToInt32(dr["cod_motivo"]);
+                            b.CodMotivo = Convert.ToInt32(dr["cod_motivo"]);
+
+                        // Nome do Motivo (Vindo do Join)
+                        if (dr["nm_motivo"] != DBNull.Value)
+                            b.MotivoTexto = dr["nm_motivo"].ToString();
+                        else
+                            b.MotivoTexto = "Motivo não encontrado"; // Fallback caso o join falhe
 
                         lista.Add(b);
                     }
@@ -536,7 +569,6 @@ public class PreAgendamentoDAO
         }
         return lista;
     }
-
     public static List<PeriodoPreAgendamentoDTO> ListarPeriodos(int idPre)
     {
         var lista = new List<PeriodoPreAgendamentoDTO>();

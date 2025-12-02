@@ -8,8 +8,8 @@ using System.Web;
 /// </summary>
 public class MotivoBloqueioDTO
 {
-   
-        public int CodMotivo { get; set; }
-        public string NmMotivo { get; set; }
-    
+
+    public int CodMotivo { get; set; }
+    public string NmMotivo { get; set; }
+
 }

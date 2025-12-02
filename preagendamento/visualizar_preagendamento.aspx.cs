@@ -12,7 +12,7 @@ public partial class visualizar_preagendamento : BasePage
     {
         if (!IsPostBack)
         {
-            CarregarClinicas();
+                CarregarClinicas();
 
             if (Request.QueryString["id"] != null)
             {
@@ -133,9 +133,9 @@ public partial class visualizar_preagendamento : BasePage
             // Objeto anônimo é suportado em C# 3.0
             bloqueiosFormatados.Add(new
             {
-                De = Convert.ToDateTime(b.de).ToString("yyyy-MM-dd"),
-                Ate = Convert.ToDateTime(b.ate).ToString("yyyy-MM-dd"),
-                CodMotivo = b.codMotivo
+                De = Convert.ToDateTime(b.De).ToString("yyyy-MM-dd"),
+                Ate = Convert.ToDateTime(b.Ate).ToString("yyyy-MM-dd"),
+                CodMotivo = b.CodMotivo
             });
         }
         hdnBloqueiosJson.Value = js.Serialize(bloqueiosFormatados);
