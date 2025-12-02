@@ -748,4 +748,49 @@ public class PreAgendamentoDAO
         }
         return lista;
     }
+
+    // =================================================================================
+    //  NOVO MÉTODO: LISTAR APROVADOS (STATUS 'C')
+    // =================================================================================
+    public static DataTable ListarAprovadosPorClinica()
+    {
+        using (SqlConnection con = new SqlConnection(connStr))
+        {
+            // Query com JOINS para trazer nomes legíveis (Clinica/Profissional)
+            // Filtra por status = 'C' e pela especialidade do chefe
+            string sql = @"
+                SELECT 
+                    p.id,
+                    p.data_preenchimento,
+                    p.observacoes,
+                    p.usuario,
+                    p.data_cadastro,
+                    p.cod_especialidade,
+                    e.nm_especialidade AS Clinica,           -- Alias 'Clinica' para o Grid
+                    p.cod_profissional,
+                    pr.nome_profissional AS Profissional,    -- Alias 'Profissional' para o Grid
+                    p.data_atualizacao,
+                    p.status,
+                    p.usuario_atualizacao
+                FROM [hspmPreAgendamento].[dbo].[PreAgendamento] p
+                LEFT JOIN [hspmPreAgendamento].[dbo].[Especialidade] e 
+                    ON e.cod_especialidade = p.cod_especialidade
+                LEFT JOIN [hspmPreAgendamento].[dbo].[Profissional] pr 
+                    ON pr.cod_profissional = p.cod_profissional
+                WHERE p.status = 'V' 
+                
+                ORDER BY p.data_preenchimento DESC";
+
+            using (SqlCommand cmd = new SqlCommand(sql, con))
+            {
+               
+
+                SqlDataAdapter da = new SqlDataAdapter(cmd);
+                DataTable dt = new DataTable();
+                da.Fill(dt);
+
+                return dt;
+            }
+        }
+    }
 }

@@ -19,6 +19,7 @@
 			<siteMapNode url="~/Preagendamento/preagendamento.aspx" title="Cadastro PreAgendamento" description="Cadastro de Pre Agendamento" />
 			<siteMapNode url="~/Preagendamento/preagendamento_listagem.aspx" title="Listagem" description="Listagem do Pre Agendamento" />
 			<siteMapNode url="~/Preagendamento/chefia_preagendamento.aspx" title="Listagem de Validacao" description="Listagem para a Chefia" />
+			<siteMapNode url="~/Preagendamento/agendamentos_aprovados.aspx" title="Listagem dos Aprovados" description="Listagem dos Aprovados" />
 		
 		</siteMapNode>
 
