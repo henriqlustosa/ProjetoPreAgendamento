@@ -1,5 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Collections; // Necessário para ICollection
+using System.Collections.Generic; // Para List<int>
 using System.Configuration;
 using System.Data;
 using System.Data.SqlClient;
@@ -15,7 +16,6 @@ public partial class chefia_preagendamento : BasePage
             // 1. Verificação de Segurança
             if (!UsuarioEhChefe())
             {
-                // Se não for chefe, redireciona para acesso negado ou login
                 Response.Redirect("~/AcessoNegado.aspx");
                 return;
             }
@@ -34,21 +34,48 @@ public partial class chefia_preagendamento : BasePage
         if (codEspecialidade > 0)
         {
             // 3. Chama o DAO filtrado
-            gvLista.DataSource = PreAgendamentoDAO.ListarPorClinica(codEspecialidade);
-            gvLista.DataBind();
+            object dados = PreAgendamentoDAO.ListarPorClinica(codEspecialidade);
 
-            // Mostra mensagem se vazio
-            divEmpty.Visible = (gvLista.Rows.Count == 0);
+            // Vincula ao Repeater
+            rptLista.DataSource = dados;
+            rptLista.DataBind();
+
+            // Verificação de Vazio compatível com C# 3.0
+            bool estaVazio = false;
+
+            ICollection collection = dados as ICollection;
+            DataTable dt = dados as DataTable;
+
+            if (collection != null)
+            {
+                estaVazio = (collection.Count == 0);
+            }
+            else if (dt != null)
+            {
+                estaVazio = (dt.Rows.Count == 0);
+            }
+
+            // Controla a visibilidade
+            if (estaVazio)
+            {
+                divEmpty.Visible = true;
+                pnlTabela.Visible = false;
+            }
+            else
+            {
+                divEmpty.Visible = false;
+                pnlTabela.Visible = true;
+            }
         }
         else
         {
-            // Caso o usuário seja chefe mas não tenha clínica vinculada no cadastro
             lblMensagem.Text = "Seu usuário não tem uma clínica vinculada.";
             divEmpty.Visible = true;
+            pnlTabela.Visible = false;
         }
     }
 
-    // --- MÉTODOS AUXILIARES (Ajuste conforme sua arquitetura de Login) ---
+    // --- MÉTODOS AUXILIARES ---
 
     private string ObterUsuarioLogado()
     {
@@ -57,17 +84,13 @@ public partial class chefia_preagendamento : BasePage
         return "";
     }
 
-    // --- AQUI ESTÁ A IMPLEMENTAÇÃO SOLICITADA ---
     private bool UsuarioEhChefe()
     {
-        // 1. Recupera a lista de IDs de perfis da Sessão (mesma lógica da BasePage)
-        var perfis = Session["perfis"] as List<int>;
+        // Cast seguro com 'as' para C# 3.0
+        List<int> perfis = Session["perfis"] as List<int>;
 
-        // 2. IMPORTANTE: Defina aqui o ID que representa o "Chefe" no seu Banco de Dados
-        // Vá na tabela 'Perfis' do seu banco SQL e veja qual é o número (ID) do perfil Chefe.
-        int idPerfilChefe = 5; // <--- SUBSTITUA '2' PELO ID REAL DO SEU BANCO
+        int idPerfilChefe = 5; // ID do perfil Chefe no banco
 
-        // 3. Verifica se a lista existe e se contém o ID do chefe
         if (perfis != null && perfis.Contains(idPerfilChefe))
         {
             return true;
@@ -76,22 +99,14 @@ public partial class chefia_preagendamento : BasePage
         return false;
     }
 
-    // Adicione este método na sua classe (pode ser na BasePage ou na chefia_preagendamento)
     public int ObterEspecialidadeDoChefe(string usuarioLogado)
     {
-        int codEspecialidade = 0; // Retorna 0 se não encontrar
+        int codEspecialidade = 0;
 
-        // String de conexão (ajuste o nome se for diferente de "gtaConnectionString")
         string connectionString = ConfigurationManager.ConnectionStrings["gtaConnectionString"].ToString();
 
         using (SqlConnection con = new SqlConnection(connectionString))
         {
-            // A Query faz o seguinte caminho:
-            // 1. Pega o usuarioLogado (LoginRede) na tabela Usuarios
-            // 2. Liga com a tabela Profissional pelo NOME (u.NomeCompleto = p.nome_profissional)
-            // 3. Liga com ProfissionalEspecialidade pelo código do profissional
-            // 4. Filtra onde 'chefe = 1' (conforme sua imagem mostra a coluna chefe)
-
             string sql = @"
             SELECT TOP 1 pe.cod_especialidade
             FROM [hspmPreAgendamento].[dbo].[ProfissionalEspecialidade] pe
@@ -118,8 +133,8 @@ public partial class chefia_preagendamento : BasePage
                 }
                 catch (Exception ex)
                 {
-                    // Tratamento de erro ou log
-                    throw new Exception("Erro ao buscar especialidade do chefe: " + ex.Message);
+                    // Logar erro se necessário
+                    lblMensagem.Text = "Erro ao identificar especialidade: " + ex.Message;
                 }
             }
         }
@@ -127,14 +142,14 @@ public partial class chefia_preagendamento : BasePage
         return codEspecialidade;
     }
 
-    protected void gvLista_RowCommand(object sender, GridViewCommandEventArgs e)
+    // ALTERADO: De RowCommand (GridView) para ItemCommand (Repeater)
+    protected void rptLista_ItemCommand(object source, RepeaterCommandEventArgs e)
     {
-        // Se o chefe também puder excluir, mantenha essa lógica.
-        // Se for apenas visualização, remova este método e os botões do ASPX.
         if (e.CommandName == "Excluir")
         {
             int id = Convert.ToInt32(e.CommandArgument);
             PreAgendamentoDAO.Excluir(id, ObterUsuarioLogado());
+
             CarregarListaChefia();
         }
     }

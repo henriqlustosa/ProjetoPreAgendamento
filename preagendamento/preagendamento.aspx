@@ -429,7 +429,10 @@
 
             // 4. Checar Edição (Carrega dados se existir ID)
             var idEdicao = $('#<%= hdnIdPreAgendamento.ClientID %>').val();
-            if (idEdicao) {
+            if (idEdicao && idEdicao !== "0") {
+
+                // Esconde o botão "Limpar Formulário" em modo edição
+                $('#<%= btnLimpar.ClientID %>').hide();
                 // Pequeno delay para garantir que PageMethods estejam prontos
                 setTimeout(CarregarDadosEdicao, 500);
             }
