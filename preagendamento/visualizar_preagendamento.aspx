@@ -1,10 +1,8 @@
-﻿<%@ Page Language="C#" MasterPageFile="~/MasterPage.master" AutoEventWireup="true"
-    CodeFile="visualizar_preagendamento.aspx.cs" Inherits="visualizar_preagendamento"
-    Title="Visualizar Pré-Agendamento" %>
+﻿<%@ Page Language="C#" MasterPageFile="~/MasterPage.master" AutoEventWireup="true" CodeFile="visualizar_preagendamento.aspx.cs" Inherits="visualizar_preagendamento" Title="Visualizar Pré-Agendamento" %>
 
 <asp:Content ID="Content1" ContentPlaceHolderID="head" runat="Server">
     <style>
-        /* --- Estilos Gerais (Idênticos ao Cadastro) --- */
+        /* --- Estilos Gerais --- */
         body { background: #f8f9fa; font-family: 'Segoe UI', sans-serif; }
         
         /* Cards e Containers */
@@ -56,6 +54,24 @@
         
         /* Botões de Ação no Rodapé */
         .footer-actions { background: #fff; padding-top: 20px; border-top: 1px solid #dee2e6; display: flex; justify-content: flex-end; gap: 10px; }
+
+        /* --- ESTILOS ESPECÍFICOS PARA REPROVAÇÃO --- */
+        .reprove-box {
+            background-color: #fff5f5;
+            border: 1px solid #feb2b2;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+            margin-bottom: 20px;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        .reprove-title { color: #c53030; font-weight: bold; margin-bottom: 10px; display: block; }
+        .reprove-input { background-color: #fff !important; cursor: text !important; border-color: #fc8181 !important; }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
     </style>
 </asp:Content>
 
@@ -66,6 +82,9 @@
         <div class="row justify-content-center">
             <div class="col-xl-10">
 
+                <!-- Mensagem de Feedback -->
+                <asp:Label ID="lblMensagem" runat="server" Visible="false" CssClass="d-block mb-3 p-3 rounded text-center fw-bold"></asp:Label>
+
                 <div class="page-title-card">
                     <i class="fas fa-eye"></i>
                     <asp:Label ID="lblTituloPagina" runat="server" Text="Visualizar e Aprovar Agenda"></asp:Label>
@@ -73,6 +92,7 @@
 
                 <div class="main-card">
                     
+                    <!-- DADOS GERAIS -->
                     <div class="section-card">
                         <div class="section-header">
                             <span><i class="fas fa-user-md me-2"></i>Dados Gerais</span>
@@ -98,6 +118,7 @@
                         </div>
                     </div>
 
+                    <!-- MESES -->
                     <div class="section-card">
                         <div class="section-header">
                             <span><i class="far fa-calendar-alt me-2"></i>Meses da Agenda</span>
@@ -110,6 +131,7 @@
                         </div>
                     </div>
 
+                    <!-- HORÁRIOS -->
                     <div class="section-card">
                         <div class="section-header">
                             <span><i class="far fa-clock me-2"></i>Horários Semanais</span>
@@ -135,6 +157,7 @@
                         <asp:HiddenField ID="hdnBlocosJson" runat="server" />
                     </div>
 
+                    <!-- BLOQUEIOS -->
                     <div class="section-card">
                         <div class="section-header">
                             <span><i class="fas fa-ban me-2"></i>Bloqueios / Ausências</span>
@@ -158,18 +181,43 @@
                         <asp:HiddenField ID="hdnBloqueiosJson" runat="server" />
                     </div>
 
+                    <!-- OBSERVAÇÕES -->
                     <div class="mb-3">
                          <span class="form-label">Observações Gerais</span>
                          <asp:TextBox ID="txtObservacoes" CssClass="form-control" TextMode="MultiLine" Rows="3" ReadOnly="true" runat="server" />
                     </div>
 
+                    <!-- ÁREA DE REPROVAÇÃO (Visível apenas ao clicar em Reprovar) -->
+                    <asp:Panel ID="pnlReprovacao" runat="server" Visible="false" CssClass="reprove-box">
+                        <span class="reprove-title"><i class="fas fa-exclamation-triangle"></i> Motivo da Reprovação</span>
+                        <p class="small text-muted mb-2">Por favor, descreva o motivo pelo qual este agendamento está sendo reprovado. Esta justificativa é obrigatória.</p>
+                        
+                        <asp:TextBox ID="txtMotivoReprovacao" runat="server" TextMode="MultiLine" Rows="3" CssClass="form-control reprove-input" placeholder="Digite aqui a justificativa..."></asp:TextBox>
+                        
+                        <asp:RequiredFieldValidator ID="rfvMotivo" runat="server" ControlToValidate="txtMotivoReprovacao" 
+                            ValidationGroup="GrupoReprovacao" ErrorMessage="A justificativa é obrigatória." 
+                            CssClass="text-danger small fw-bold mt-1 display-block"></asp:RequiredFieldValidator>
+
+                        <div class="d-flex justify-content-end gap-2 mt-3">
+                            <asp:Button ID="btnCancelarReprovacao" runat="server" Text="Cancelar" OnClick="btnCancelarReprovacao_Click" CssClass="btn btn-secondary btn-sm" CausesValidation="false" />
+                            <asp:Button ID="btnConfirmarReprovacao" runat="server" Text="Confirmar Reprovação" OnClick="btnConfirmarReprovacao_Click" CssClass="btn btn-danger btn-sm fw-bold" ValidationGroup="GrupoReprovacao" />
+                        </div>
+                    </asp:Panel>
+
+                    <!-- RODAPÉ DE AÇÕES -->
                     <div class="footer-actions">
-                         <asp:Button ID="btnVoltar" CssClass="btn btn-light border me-2" Text="Voltar" OnClick="btnVoltar_Click" runat="server" />
+                         <asp:Button ID="btnVoltar" CssClass="btn btn-light border me-auto" Text="Voltar" OnClick="btnVoltar_Click" runat="server" CausesValidation="false" />
                          
+                         <!-- Botão que abre o painel de Reprovação -->
+                         <asp:Button ID="btnAbrirReprovacao" runat="server" Text="✖ Reprovar Agenda" 
+                            CssClass="btn btn-outline-danger px-3" 
+                            OnClick="btnAbrirReprovacao_Click" CausesValidation="false" />
+
+                         <!-- Botão de Aprovação (Escondido se estiver reprovando) -->
                          <asp:Button ID="btnAprovar" runat="server" Text="✔ Aprovar Agenda" 
                             CssClass="btn btn-success px-4" 
                             OnClick="btnAprovar_Click" 
-                            OnClientClick="return confirm('Tem certeza que deseja APROVAR este pré-agendamento?');" />
+                            OnClientClick="return confirm('Tem certeza que deseja APROVAR este pré-agendamento?');" CausesValidation="false" />
                     </div>
 
                 </div>
@@ -203,10 +251,10 @@
 
             // 2. Meses
             var strMeses = $('#<%= hdnMesesSelecionados.ClientID %>').val();
-            if(strMeses) {
-                strMeses.split(',').forEach(function(m) {
+            if (strMeses) {
+                strMeses.split(',').forEach(function (m) {
                     m = m.trim();
-                    if(m && m.indexOf('-') > -1) {
+                    if (m && m.indexOf('-') > -1) {
                         var partes = m.split('-');
                         var dataObj = new Date(parseInt(partes[0]), parseInt(partes[1]) - 1, 1);
                         var label = dataObj.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
@@ -219,7 +267,7 @@
 
             // 3. Horarios
             var jsonH = $('#<%= hdnBlocosJson.ClientID %>').val();
-            if(jsonH) {
+            if (jsonH) {
                 listaHorarios = JSON.parse(jsonH);
                 RenderizarTabelaHorarios();
             }

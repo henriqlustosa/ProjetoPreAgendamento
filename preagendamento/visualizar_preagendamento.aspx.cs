@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Configuration;
 using System.Data.SqlClient;
-using System.Linq; // C# 3.0 permite LINQ, mas vamos evitar usos complexos
 using System.Web.Script.Serialization;
 using System.Web.UI;
 
@@ -12,7 +11,7 @@ public partial class visualizar_preagendamento : BasePage
     {
         if (!IsPostBack)
         {
-                CarregarClinicas();
+            CarregarClinicas();
 
             if (Request.QueryString["id"] != null)
             {
@@ -29,7 +28,7 @@ public partial class visualizar_preagendamento : BasePage
         }
     }
 
-    // --- MÉTODOS ESTÁTICOS ---
+    // --- MÉTODOS ESTÁTICOS (AJAX) ---
 
     [System.Web.Services.WebMethod]
     public static List<MotivoBloqueioDTO> ListarMotivosBloqueio()
@@ -50,7 +49,6 @@ public partial class visualizar_preagendamento : BasePage
         }
         return lista;
     }
-
 
     [System.Web.Services.WebMethod]
     public static List<SubespecialidadeDTO> ListarSubespecialidades(int codEspecialidade)
@@ -122,15 +120,13 @@ public partial class visualizar_preagendamento : BasePage
         if (blocos == null) blocos = new List<BlocoDiaDTO>();
         hdnBlocosJson.Value = js.Serialize(blocos);
 
-        // 2. Bloqueios (Ajustado para C# 3.0 - substituindo LINQ Select por foreach)
+        // 2. Bloqueios
         List<BloqueioDTO> bloqueios = PreAgendamentoDAO.ListarBloqueios(id);
         if (bloqueios == null) bloqueios = new List<BloqueioDTO>();
 
-        // Usando List<object> para garantir compatibilidade total na serialização
         List<object> bloqueiosFormatados = new List<object>();
         foreach (BloqueioDTO b in bloqueios)
         {
-            // Objeto anônimo é suportado em C# 3.0
             bloqueiosFormatados.Add(new
             {
                 De = Convert.ToDateTime(b.De).ToString("yyyy-MM-dd"),
@@ -150,9 +146,73 @@ public partial class visualizar_preagendamento : BasePage
             listaMeses.Add(p.Ano + "-" + p.Mes.ToString("00"));
         }
         hdnMesesSelecionados.Value = string.Join(",", listaMeses.ToArray());
+
+        // --- LÓGICA DE VERIFICAÇÃO DE URL (ADICIONADA) ---
+        // Se a URL contém ?origem=aprovados, escondemos os botões de ação
+        if (Request.QueryString["origem"] == "aprovados")
+        {
+            btnAprovar.Visible = false;
+            btnAbrirReprovacao.Visible = false;
+            pnlReprovacao.Visible = false;
+
+            // Opcional: Feedback visual para o usuário
+            lblTituloPagina.Text = "Visualizar Agendamento (Aprovado)";
+            lblMensagem.Text = "Este agendamento já foi aprovado. Acesso apenas para leitura.";
+            lblMensagem.CssClass = "d-block mb-3 p-3 rounded text-center fw-bold bg-info text-white";
+            lblMensagem.Visible = true;
+        }
     }
 
-    // --- AÇÕES ---
+    // --- AÇÕES DO USUÁRIO ---
+
+    protected void btnAbrirReprovacao_Click(object sender, EventArgs e)
+    {
+        btnAprovar.Visible = false;
+        btnAbrirReprovacao.Visible = false;
+        pnlReprovacao.Visible = true;
+        txtMotivoReprovacao.Focus();
+    }
+
+    protected void btnCancelarReprovacao_Click(object sender, EventArgs e)
+    {
+        pnlReprovacao.Visible = false;
+        btnAprovar.Visible = true;
+        btnAbrirReprovacao.Visible = true;
+        txtMotivoReprovacao.Text = string.Empty;
+    }
+
+    protected void btnConfirmarReprovacao_Click(object sender, EventArgs e)
+    {
+        if (!Page.IsValid) return;
+
+        try
+        {
+            int id = Convert.ToInt32(hdnIdPreAgendamento.Value);
+            string motivo = txtMotivoReprovacao.Text.Trim();
+            string usuario = Session["login"] != null ? Session["login"].ToString() : "sistema";
+
+            PreAgendamentoDAO.Reprovar(id, motivo, usuario);
+
+            lblMensagem.Text = "Pré-agendamento REPROVADO com sucesso.";
+            lblMensagem.CssClass = "d-block mb-3 p-3 rounded text-center fw-bold bg-success text-white";
+            lblMensagem.Visible = true;
+
+            pnlReprovacao.Visible = false;
+            btnAprovar.Visible = false;
+            btnAbrirReprovacao.Visible = false;
+
+            // OBS: Se você reprovar, ele volta para a tela de onde veio. 
+            // Como a ação de reprovar só aparece na tela "pendente", ele volta para chefia.
+            string script = "setTimeout(function(){ window.location='chefia_preagendamento.aspx'; }, 2000);";
+            ScriptManager.RegisterStartupScript(this, GetType(), "redirect", script, true);
+        }
+        catch (Exception ex)
+        {
+            lblMensagem.Text = "Erro ao reprovar: " + ex.Message;
+            lblMensagem.CssClass = "d-block mb-3 p-3 rounded text-center fw-bold bg-danger text-white";
+            lblMensagem.Visible = true;
+        }
+    }
 
     protected void btnAprovar_Click(object sender, EventArgs e)
     {
@@ -169,15 +229,22 @@ public partial class visualizar_preagendamento : BasePage
         catch (Exception ex)
         {
             string msg = ex.Message.Replace("'", "");
-            // CORREÇÃO C# 3.0: Substituído $"..." por string.Format
             string scriptErro = string.Format("alert('Erro ao aprovar: {0}');", msg);
-
             ScriptManager.RegisterStartupScript(this, GetType(), "erro", scriptErro, true);
         }
     }
 
+    // --- CORREÇÃO DO BOTÃO VOLTAR ---
     protected void btnVoltar_Click(object sender, EventArgs e)
     {
-        Response.Redirect("chefia_preagendamento.aspx");
+        // Verifica a QueryString novamente para saber para onde voltar
+        if (Request.QueryString["origem"] == "aprovados")
+        {
+            Response.Redirect("agendamentos_aprovados.aspx");
+        }
+        else
+        {
+            Response.Redirect("chefia_preagendamento.aspx");
+        }
     }
 }
