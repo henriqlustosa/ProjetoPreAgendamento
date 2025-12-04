@@ -5,7 +5,7 @@
 		<siteMapNode url="" title="Administração" description="Administração do Site">
 			
 			<siteMapNode url="~/Restrito/CadastroDeUsuario.aspx" title="Cadastro Usuário" description="Cadastro de novos usuários do sistema" />
-			<siteMapNode url="~/Restrito/TiposExame.aspx" title="Cadastro de Exames" description="Cadastro de novos exames do sistema" />
+			<siteMapNode url="~/Restrito/cadastro_profissional.aspx" title="Cadastro de Profissionais" description="Cadastro de novos profissionais do sistema" />
 			
 		</siteMapNode>
 
